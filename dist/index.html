@@ -1957,12 +1957,29 @@
             }
         }
 
+        async function safeFetchJson(url, options = {}) {
+            try {
+                const res = await fetch(url, options);
+                const contentType = res.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    return null;
+                }
+                return await res.json();
+            } catch (e) {
+                return null;
+            }
+        }
+
         async function checkAuthentication() {
             try {
-                const res = await fetch('/auth/status');
-                const data = await res.json();
-                isUserAuthenticated = data.authenticated;
-                userEmailAddress = data.email;
+                const data = await safeFetchJson('/auth/status');
+                if (data) {
+                    isUserAuthenticated = data.authenticated;
+                    userEmailAddress = data.email;
+                } else {
+                    isUserAuthenticated = false;
+                    userEmailAddress = null;
+                }
 
                 const storedUser = localStorage.getItem('sapcon_user') ? JSON.parse(localStorage.getItem('sapcon_user')) : null;
                 const badge = document.getElementById('headerAuthBadge');
@@ -2049,13 +2066,15 @@
         // ──────────────────────────────────────────────
         async function loadQueueData() {
             try {
-                const res = await fetch('/api/queue');
-                const data = await res.json();
-                if (data.success) {
+                const data = await safeFetchJson('/api/queue');
+                if (data && data.success) {
                     currentQueue = data.queue || [];
                     renderDraftsTable(currentQueue);
                     updateMetrics(data.metrics || {});
                     renderBatchJobStatus(data.job_status);
+                } else {
+                    renderDraftsTable([]);
+                    updateMetrics({ pending_review: 0, sent: 0, total_leads: 0 });
                 }
             } catch (err) {
                 console.error('Failed to load queue:', err);
@@ -2626,8 +2645,7 @@
         // ──────────────────────────────────────────────
         async function loadProfileReference() {
             try {
-                const res = await fetch('/api/profile');
-                const profile = await res.json();
+                const profile = await safeFetchJson('/api/profile');
                 const container = document.getElementById('catalogModalContent');
 
                 if (profile && profile.product_catalog) {

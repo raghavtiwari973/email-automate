@@ -260,17 +260,27 @@ async def auth_callback(code: str = None, error: str = None, from_app: Optional[
                 <div style="background:#F8FAFC; border-radius:12px; padding:14px; margin-bottom:24px; font-size:13px; color:#64748B;">
                     Gmail API is now authorized to send all verified sales outreach & quote emails.
                 </div>
-                <a href="/" style="display:block; background:#16345C; color:white; padding:14px; border-radius:10px; text-decoration:none; font-weight:700; font-size:15px; margin-bottom:12px;">
-                    Open Sales Workbench
+                <a href="sapcon://oauth-callback" style="display:block; background:#2563EB; color:white; padding:15px 20px; border-radius:12px; text-decoration:none; font-weight:700; font-size:16px; margin-bottom:12px; box-shadow:0 4px 14px rgba(37,99,235,0.35);">
+                    🚀 Return to SAPCON App
+                </a>
+                <a href="/" style="display:block; background:#F1F5F9; color:#1E293B; padding:12px; border-radius:10px; text-decoration:none; font-weight:600; font-size:14px; margin-bottom:12px;">
+                    Open Web Dashboard
                 </a>
                 <p style="font-size:12px; color:#94A3B8; margin:0;">
-                    If using the mobile app, you can now return to the app.
+                    You are now fully logged in. Returning to mobile app...
                 </p>
             </div>
             <script>
-                // If in desktop browser, redirect back after 2 seconds
-                if (!navigator.userAgent.match(/Android|iPhone|Mobile/i)) {{
-                    setTimeout(() => {{ window.location.href = '/?auth_success=1'; }}, 1800);
+                // On mobile, auto-redirect to the app deep link immediately
+                if (navigator.userAgent.match(/Android|iPhone|Mobile/i)) {{
+                    setTimeout(() => {{
+                        window.location.href = "sapcon://oauth-callback";
+                    }}, 500);
+                }} else {{
+                    // On desktop, return to dashboard
+                    setTimeout(() => {{
+                        window.location.href = "/?auth_success=1";
+                    }}, 1800);
                 }}
             </script>
         </body>

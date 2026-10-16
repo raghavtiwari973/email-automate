@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:video_player/video_player.dart';
 import 'theme.dart';
 import 'api_service.dart';
 
@@ -42,22 +43,60 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  late VideoPlayerController _videoController;
+  bool _isVideoInitialized = false;
+  bool _hasNavigated = false;
+  Map<String, dynamic>? _authResult;
+
   @override
   void initState() {
     super.initState();
-    _checkSession();
+    _startPreloadAndVideo();
   }
 
-  Future<void> _checkSession() async {
-    await Future.delayed(const Duration(milliseconds: 2800));
-    final auth = await ApiService.getAuthStatus();
-    if (!mounted) return;
+  Future<void> _startPreloadAndVideo() async {
+    // 1. Asynchronously pre-fetch auth session in parallel while video is playing
+    ApiService.getAuthStatus().then((auth) {
+      _authResult = auth;
+    }).catchError((_) {
+      _authResult = {'authenticated': false, 'email': null};
+    });
 
+    // 2. Initialize and play the full splash MP4 video
+    _videoController = VideoPlayerController.asset('assets/images/flash.mp4');
+    try {
+      await _videoController.initialize();
+      if (!mounted) return;
+      setState(() => _isVideoInitialized = true);
+
+      _videoController.setLooping(false);
+      _videoController.play();
+
+      _videoController.addListener(() {
+        final pos = _videoController.value.position;
+        final dur = _videoController.value.duration;
+        // When video reaches the end (or is finished playing)
+        if (dur > Duration.zero && pos >= dur && !_hasNavigated) {
+          _navigateToNextScreen();
+        }
+      });
+    } catch (e) {
+      // Fallback in case device video codec has issue: wait 5.5s then navigate
+      await Future.delayed(const Duration(milliseconds: 5500));
+      if (!_hasNavigated) _navigateToNextScreen();
+    }
+  }
+
+  void _navigateToNextScreen() {
+    if (_hasNavigated || !mounted) return;
+    _hasNavigated = true;
+
+    final auth = _authResult ?? {'authenticated': false};
     if (auth['authenticated'] == true) {
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 600),
+          transitionDuration: const Duration(milliseconds: 500),
           pageBuilder: (_, __, ___) => MainNavigationScaffold(
             userEmail: auth['email'] ?? 'raghavtiwari972003@gmail.com',
           ),
@@ -68,7 +107,7 @@ class _SplashScreenState extends State<SplashScreen> {
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 600),
+          transitionDuration: const Duration(milliseconds: 500),
           pageBuilder: (_, __, ___) => const OnboardingScreen(),
           transitionsBuilder: (_, anim, __, child) => FadeTransition(opacity: anim, child: child),
         ),
@@ -77,18 +116,30 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
+  void dispose() {
+    _videoController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Fill the entire screen without any margins or empty spaces (edge-to-edge)
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: Image.asset(
-          'assets/images/flash.gif',
-          fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => Image.asset(
-            'assets/images/image1.png',
-            fit: BoxFit.contain,
-          ),
-        ),
+      backgroundColor: Colors.white,
+      body: SizedBox.expand(
+        child: _isVideoInitialized
+            ? FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _videoController.value.size.width,
+                  height: _videoController.value.size.height,
+                  child: VideoPlayer(_videoController),
+                ),
+              )
+            : Image.asset(
+                'assets/images/image1.png',
+                fit: BoxFit.contain,
+              ),
       ),
     );
   }
