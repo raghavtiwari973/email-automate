@@ -1,38 +1,2689 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAPCON Instruments — Sales Workbench</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ══════════════════════════════════════════════════════════════
+           SAPCON ENTERPRISE DESIGN SYSTEM & CSS TOKENS
+        ══════════════════════════════════════════════════════════════ */
+        :root {
+            /* Brand & Action Colors */
+            --navy-primary: #16345C;
+            --navy-dark: #0f2440;
+            --blue-action: #2563EB;
+            --blue-hover: #1d4ed8;
+            --blue-subtle: #EFF6FF;
+            --blue-border: #BFDBFE;
 
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
+            /* Neutral Surfaces & Borders */
+            --bg-app: #F5F7FA;
+            --surface: #FFFFFF;
+            --surface-subtle: #F8FAFC;
+            --surface-hover: #F1F5F9;
+            --border-light: #E2E8F0;
+            --border-mid: #CBD5E1;
 
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+            /* Typography Colors */
+            --text-dark: #172B4D;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
 
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
-  <base href="/">
+            /* Status & Feedback Tokens */
+            --status-success: #16A34A;
+            --status-success-bg: #F0FDF4;
+            --status-success-border: #BBF7D0;
+            --status-warning: #D97706;
+            --status-warning-bg: #FFFBEB;
+            --status-warning-border: #FDE68A;
+            --status-error: #DC2626;
+            --status-error-bg: #FEF2F2;
+            --status-error-border: #FECACA;
 
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+            /* Dimensions & Radius */
+            --header-h: 64px;
+            --sidebar-w: 260px;
+            --sidebar-w-collapsed: 68px;
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-pill: 9999px;
 
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="sapcon_mobile">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+            /* Shadows */
+            --shadow-subtle: 0 1px 3px rgba(15, 23, 42, 0.05);
+            --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+            --shadow-float: 0 4px 12px rgba(15, 23, 42, 0.08);
+            --shadow-modal: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+        }
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
 
-  <title>sapcon_mobile</title>
-  <link rel="manifest" href="manifest.json">
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           APPLICATION HEADER
+        ══════════════════════════════════════════════════════════════ */
+        .app-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-h);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 1000;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-toggle-sidebar {
+            background: transparent;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-toggle-sidebar:hover {
+            background: var(--surface-hover);
+            color: var(--text-dark);
+        }
+
+        .brand-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .brand-logo-img {
+            height: 34px;
+            width: auto;
+            max-width: 140px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .brand-divider {
+            width: 1px;
+            height: 22px;
+            background: var(--border-light);
+            margin: 0 4px;
+        }
+
+        .brand-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--navy-primary);
+            letter-spacing: -0.2px;
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        /* OAuth Status Badge in Header */
+        .auth-status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: var(--radius-pill);
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid var(--border-light);
+            background: var(--surface-subtle);
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+        .auth-status-indicator.connected {
+            background: var(--status-success-bg);
+            border-color: var(--status-success-border);
+            color: var(--status-success);
+        }
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--status-warning);
+        }
+        .auth-status-indicator.connected .status-dot {
+            background: var(--status-success);
+        }
+
+        .btn-header-login {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: var(--shadow-subtle);
+        }
+        .btn-header-login:hover {
+            border-color: var(--blue-action);
+            color: var(--blue-action);
+            background: var(--blue-subtle);
+        }
+
+        .btn-header-logout {
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-header-logout:hover {
+            background: var(--status-error-bg);
+            border-color: var(--status-error-border);
+            color: var(--status-error);
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           APPLICATION SHELL (SIDEBAR + MAIN CONTENT)
+        ══════════════════════════════════════════════════════════════ */
+        .app-layout {
+            display: flex;
+            margin-top: var(--header-h);
+            min-height: calc(100vh - var(--header-h));
+            position: relative;
+        }
+
+        /* Collapsible Left Sidebar */
+        .app-sidebar {
+            width: var(--sidebar-w);
+            background: var(--surface);
+            border-right: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: var(--header-h);
+            bottom: 0;
+            left: 0;
+            z-index: 900;
+            transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .app-sidebar.collapsed {
+            width: var(--sidebar-w-collapsed);
+        }
+
+        .sidebar-section {
+            padding: 20px 14px 8px;
+        }
+        .sidebar-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            padding: 0 10px 8px;
+            white-space: nowrap;
+            transition: opacity 0.15s;
+        }
+        .app-sidebar.collapsed .sidebar-section-title {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 12px;
+            margin-bottom: 4px;
+            border-radius: var(--radius-md);
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+        .nav-item:hover {
+            background: var(--surface-hover);
+            color: var(--text-dark);
+        }
+        .nav-item.active {
+            background: var(--blue-subtle);
+            color: var(--blue-action);
+            border-color: var(--blue-border);
+            font-weight: 600;
+        }
+        .nav-item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            stroke-width: 2;
+        }
+        .nav-item-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: opacity 0.15s;
+        }
+        .app-sidebar.collapsed .nav-item-text {
+            display: none;
+        }
+
+        .nav-counter {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: var(--radius-pill);
+            background: var(--surface-hover);
+            color: var(--text-secondary);
+        }
+        .nav-item.active .nav-counter {
+            background: var(--blue-action);
+            color: #ffffff;
+        }
+        .app-sidebar.collapsed .nav-counter {
+            display: none;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 16px;
+            border-top: 1px solid var(--border-light);
+            background: var(--surface-subtle);
+        }
+        .sidebar-footer-info {
+            font-size: 11.5px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        .app-sidebar.collapsed .sidebar-footer {
+            display: none;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           MAIN VIEWPORT CONTAINER
+        ══════════════════════════════════════════════════════════════ */
+        .app-main {
+            flex: 1;
+            margin-left: var(--sidebar-w);
+            padding: 32px;
+            max-width: 1360px;
+            transition: margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: calc(100vh - var(--header-h));
+        }
+        .app-layout.sidebar-collapsed .app-main {
+            margin-left: var(--sidebar-w-collapsed);
+        }
+
+        /* Breadcrumbs */
+        .breadcrumb-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .breadcrumb-bar a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+        .breadcrumb-bar a:hover {
+            color: var(--blue-action);
+        }
+
+        /* Page Headers */
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .page-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--navy-primary);
+            letter-spacing: -0.4px;
+        }
+        .page-description {
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .page-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Standardized Enterprise Action Buttons */
+        .btn-action-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 40px;
+            padding: 0 16px;
+            background: var(--blue-action);
+            color: #ffffff;
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: var(--shadow-subtle);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .btn-action-primary:hover {
+            background: var(--blue-hover);
+        }
+        .btn-action-primary:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .btn-action-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 40px;
+            padding: 0 16px;
+            background: var(--surface);
+            color: var(--text-dark);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-md);
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .btn-action-secondary:hover {
+            background: var(--surface-hover);
+            border-color: var(--text-secondary);
+        }
+
+        .btn-action-success {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 40px;
+            padding: 0 16px;
+            background: var(--status-success);
+            color: #ffffff;
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: var(--shadow-subtle);
+        }
+        .btn-action-success:hover {
+            background: #15803d;
+        }
+
+        .btn-action-danger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 34px;
+            padding: 0 12px;
+            background: var(--surface);
+            color: var(--status-error);
+            border: 1px solid var(--status-error-border);
+            border-radius: var(--radius-md);
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-action-danger:hover {
+            background: var(--status-error-bg);
+            border-color: var(--status-error);
+        }
+
+        .btn-table-action {
+            height: 30px;
+            padding: 0 10px;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: var(--radius-sm);
+        }
+
+        /* View Section Controls */
+        .workbench-view {
+            display: none;
+        }
+        .workbench-view.active {
+            display: block;
+        }
+
+        /* Standard Enterprise Card */
+        .enterprise-card {
+            background: var(--surface);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-card);
+            position: relative;
+        }
+        .card-title-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .card-heading {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--navy-primary);
+        }
+        .card-subheading {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           METRICS SUMMARY SECTION
+        ══════════════════════════════════════════════════════════════ */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .metric-card {
+            background: var(--surface);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            box-shadow: var(--shadow-subtle);
+        }
+        .metric-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .metric-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--navy-primary);
+            line-height: 1.1;
+        }
+        .metric-caption {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           TABLES & STRUCTURED LISTS
+        ══════════════════════════════════════════════════════════════ */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            background: var(--surface);
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+        .data-table th {
+            background: var(--surface-subtle);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 11.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-light);
+            white-space: nowrap;
+        }
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-dark);
+            vertical-align: middle;
+        }
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        .data-table tr:hover td {
+            background-color: var(--surface-hover);
+        }
+
+        /* Status Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 9px;
+            border-radius: var(--radius-pill);
+            font-size: 11.5px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge.pending {
+            background: var(--status-warning-bg);
+            color: var(--status-warning);
+            border: 1px solid var(--status-warning-border);
+        }
+        .badge.sent {
+            background: var(--status-success-bg);
+            color: var(--status-success);
+            border: 1px solid var(--status-success-border);
+        }
+        .badge.direct {
+            background: var(--blue-subtle);
+            color: var(--blue-action);
+            border: 1px solid var(--blue-border);
+        }
+        .badge.error {
+            background: var(--status-error-bg);
+            color: var(--status-error);
+            border: 1px solid var(--status-error-border);
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           EMPTY STATES
+        ══════════════════════════════════════════════════════════════ */
+        .empty-state-panel {
+            text-align: center;
+            padding: 56px 24px;
+            background: var(--surface);
+            border: 1px dashed var(--border-mid);
+            border-radius: var(--radius-lg);
+            margin: 16px 0;
+        }
+        .empty-state-icon {
+            width: 48px;
+            height: 48px;
+            color: var(--text-muted);
+            margin: 0 auto 16px;
+            stroke-width: 1.5;
+        }
+        .empty-state-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--navy-primary);
+            margin-bottom: 6px;
+        }
+        .empty-state-desc {
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            max-width: 440px;
+            margin: 0 auto 20px;
+            line-height: 1.5;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           FORMS & INPUTS
+        ══════════════════════════════════════════════════════════════ */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+        .form-label .required-star {
+            color: var(--status-error);
+            margin-left: 2px;
+        }
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .form-control {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            font-size: 13.5px;
+            font-family: inherit;
+            color: var(--text-dark);
+            background: var(--surface);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-md);
+            transition: all 0.15s ease;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--blue-action);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+        textarea.form-control {
+            height: auto;
+            min-height: 100px;
+            padding: 12px 14px;
+            line-height: 1.5;
+        }
+
+        /* Drag & Drop File Upload Zone */
+        .dropzone-enterprise {
+            border: 2px dashed var(--border-mid);
+            border-radius: var(--radius-lg);
+            background: var(--surface-subtle);
+            padding: 40px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .dropzone-enterprise:hover, .dropzone-enterprise.dragover {
+            border-color: var(--blue-action);
+            background: var(--blue-subtle);
+        }
+        .dropzone-enterprise input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+        .dropzone-icon-wrap {
+            width: 44px;
+            height: 44px;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            color: var(--blue-action);
+        }
+        .dropzone-heading {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--navy-primary);
+            margin-bottom: 4px;
+        }
+        .dropzone-support {
+            font-size: 12.5px;
+            color: var(--text-secondary);
+        }
+
+        /* Advanced Options Toggle Card */
+        .option-panel {
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .option-panel-warning {
+            border-color: var(--status-warning-border);
+            background: var(--status-warning-bg);
+        }
+        .option-info {
+            flex: 1;
+        }
+        .option-title {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .option-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           SCREEN THREE: TWO-PANEL CUSTOMER INQUIRY WORKSPACE
+        ══════════════════════════════════════════════════════════════ */
+        .inquiry-split-view {
+            display: grid;
+            grid-template-columns: 38% 62%;
+            gap: 20px;
+            align-items: start;
+            min-height: 640px;
+        }
+        .inbox-list-column {
+            background: var(--surface);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-card);
+        }
+        .inbox-toolbar {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--surface-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .inbox-scroll-list {
+            max-height: 680px;
+            overflow-y: auto;
+        }
+        .inbox-message-row {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-light);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .inbox-message-row:hover {
+            background-color: var(--surface-hover);
+        }
+        .inbox-message-row.selected {
+            background-color: var(--blue-subtle);
+            border-left: 3px solid var(--blue-action);
+        }
+        .inbox-row-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .inbox-sender-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--navy-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 170px;
+        }
+        .inbox-date-txt {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+        .inbox-subject-line {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+        }
+        .inbox-preview-snippet {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Right Panel: Selected Email & Technical Response */
+        .inbox-detail-column {
+            background: var(--surface);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-card);
+            min-height: 640px;
+        }
+        .inquiry-meta-box {
+            padding: 16px;
+            background: var(--surface-subtle);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+            margin-bottom: 16px;
+        }
+        .inquiry-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+        .inquiry-meta-row:last-child {
+            margin-bottom: 0;
+        }
+        .inquiry-meta-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            width: 70px;
+            flex-shrink: 0;
+        }
+        .inquiry-meta-value {
+            color: var(--text-dark);
+            word-break: break-all;
+        }
+
+        /* Full Email Message Content View */
+        .inquiry-body-view {
+            padding: 20px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            background: #ffffff;
+            font-size: 13.5px;
+            line-height: 1.6;
+            color: var(--text-dark);
+            margin-bottom: 24px;
+            min-height: 200px;
+            max-height: 480px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .inquiry-body-iframe {
+            width: 100%;
+            height: 420px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            background: #ffffff;
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        /* Technical Reply Composer */
+        .reply-composer-card {
+            border: 1.5px solid var(--blue-border);
+            background: #fafcff;
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-top: 16px;
+        }
+        .ai-analysis-tag {
+            background: #e0f2fe;
+            border: 1px solid #bae6fd;
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #0369a1;
+            margin-bottom: 14px;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           MODAL DIALOG (EMAIL REVIEW & EDIT)
+        ══════════════════════════════════════════════════════════════ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-dialog {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-modal);
+            border: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-body {
+            padding: 24px;
+            flex: 1;
+        }
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-light);
+            background: var(--surface-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Loading Overlay */
+        .loading-curtain {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: inherit;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 100;
+        }
+        .enterprise-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-light);
+            border-top-color: var(--blue-action);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
+        .toast-notification {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--navy-primary);
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            font-size: 13.5px;
+            font-weight: 500;
+            box-shadow: var(--shadow-float);
+            display: none;
+            z-index: 3000;
+            animation: slideUp 0.25s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(16px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           RESPONSIVE BREAKPOINTS (DESKTOP, TABLET, MOBILE)
+        ══════════════════════════════════════════════════════════════ */
+        @media (max-width: 1024px) {
+            .app-main {
+                padding: 20px;
+            }
+            .inquiry-split-view {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-sidebar {
+                transform: translateX(-100%);
+                width: var(--sidebar-w) !important;
+            }
+            .app-sidebar.mobile-open {
+                transform: translateX(0);
+                box-shadow: var(--shadow-modal);
+            }
+            .app-main {
+                margin-left: 0 !important;
+                padding: 16px;
+            }
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            .page-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .page-header-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+    </style>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TOP HEADER BAR
+    ══════════════════════════════════════════════════════════════ -->
+    <header class="app-header">
+        <div class="header-left">
+            <button class="btn-toggle-sidebar" id="sidebarToggleBtn" title="Toggle Navigation">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <a href="/" class="brand-link">
+                <img src="/images/image1.png" alt="SAPCON Instruments" class="brand-logo-img" onerror="this.style.display='none'">
+                <div class="brand-divider"></div>
+                <div>
+                    <div class="brand-title">SAPCON Instruments</div>
+                    <div class="brand-subtitle">Sales Workbench</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="header-right">
+            <!-- User / Google OAuth Status -->
+            <div class="auth-status-indicator" id="headerAuthBadge">
+                <div class="status-dot" id="headerStatusDot"></div>
+                <span id="headerAuthEmail">Checking Auth…</span>
+            </div>
+
+            <!-- Account Sign In / Sign Up Button -->
+            <button class="btn-action-secondary" id="btnUserAccount" onclick="openAuthModal('login')" style="display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 12px; font-size:12.5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Sign In / Sign Up
+            </button>
+
+            <!-- OAuth Login Button -->
+            <a href="/auth/login" class="btn-header-login" id="btnHeaderLogin">
+                <svg width="15" height="15" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Google Auth
+            </a>
+
+            <button class="btn-header-logout" id="btnHeaderLogout" style="display:none;" onclick="handleAppLogout()">
+                Sign Out
+            </button>
+        </div>
+    </header>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         APPLICATION LAYOUT (SIDEBAR + MAIN)
+    ══════════════════════════════════════════════════════════════ -->
+    <div class="app-layout" id="appLayout">
+
+        <!-- COLLAPSIBLE ENTERPRISE SIDEBAR -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Workspace</div>
+
+                <a class="nav-item active" id="navItemQueue" onclick="navigateTo('queue')">
+                    <div class="nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                        </svg>
+                        <span class="nav-item-text">Outbox Drafts</span>
+                    </div>
+                    <span class="nav-counter" id="sidebarQueueCount">0</span>
+                </a>
+
+                <a class="nav-item" id="navItemLeads" onclick="navigateTo('leads')">
+                    <div class="nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <line x1="19" y1="8" x2="19" y2="14"></line>
+                            <line x1="22" y1="11" x2="16" y2="11"></line>
+                        </svg>
+                        <span class="nav-item-text">New Leads &amp; File Ingestion</span>
+                    </div>
+                </a>
+
+                <a class="nav-item" id="navItemInquiries" onclick="navigateTo('inquiries')">
+                    <div class="nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span class="nav-item-text">Client Inquiries &amp; Replies</span>
+                    </div>
+                    <span class="nav-counter" id="sidebarInboxCount" style="display:none;">0</span>
+                </a>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Reference &amp; Solutions</div>
+                <a class="nav-item" id="navItemCatalog" onclick="openProductCatalogModal()">
+                    <div class="nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                        <span class="nav-item-text">Product Solutions Catalog</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-footer-info">
+                    <strong>SAPCON Instruments</strong><br>
+                    Level &amp; Speed Measurement<br>
+                    <span style="color:var(--text-muted); font-size:10.5px;">Indore, India • Est. 1983</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="app-main">
+
+            <!-- Authentication Required Warning Notice -->
+            <div id="globalAuthAlert" style="display:none; background:var(--status-error-bg); border:1px solid var(--status-error-border); border-radius:var(--radius-md); padding:14px 18px; margin-bottom:24px; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <div>
+                        <div style="font-weight:600; color:#991B1B; font-size:13.5px;">Google Account Required for Email Dispatch</div>
+                        <div style="color:#7F1D1D; font-size:12px; margin-top:2px;">SMTP has been removed. Emails are sent strictly from your authenticated Google Account.</div>
+                    </div>
+                </div>
+                <a href="/auth/login" class="btn-action-primary" style="height:34px; font-size:12.5px;">
+                    Connect Google Account
+                </a>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 SCREEN 1: OUTBOX DRAFTS — REVIEW & DISPATCH
+            ══════════════════════════════════════════════════════════════ -->
+            <section id="viewQueue" class="workbench-view active">
+                <div class="breadcrumb-bar">
+                    <span>Workspace</span>
+                    <span>/</span>
+                    <span>Outbox Drafts</span>
+                </div>
+
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Outbox Drafts</h1>
+                        <p class="page-description">Review AI-prepared customer communications before dispatch.</p>
+                    </div>
+                    <div class="page-header-actions">
+                        <button class="btn-action-success" id="btnBulkSendAll" onclick="handleBulkDispatch()" style="display:none;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                            Send All Approved Directly
+                        </button>
+                        <button class="btn-action-secondary" onclick="loadQueueData()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Verified Metrics Summary Section -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">
+                            Pending Review
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                        <div class="metric-value" id="metricPendingCount">0</div>
+                        <div class="metric-caption">Drafts awaiting verification</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">
+                            Sent Out
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <div class="metric-value" id="metricSentCount">0</div>
+                        <div class="metric-caption">Successfully dispatched via Google</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">
+                            Total Processed Leads
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        </div>
+                        <div class="metric-value" id="metricTotalLeads">0</div>
+                        <div class="metric-caption">Historical lead records in system</div>
+                    </div>
+                </div>
+
+                <!-- Active Batch Progression Banner -->
+                <div id="batchProgressBar" style="display:none; background:var(--blue-subtle); border:1px solid var(--blue-border); border-radius:var(--radius-md); padding:16px 20px; margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-weight:600; color:var(--blue-action); font-size:13.5px;" id="batchProgressLabel">Preparing customer drafts in background…</span>
+                        <span style="font-size:12.5px; color:var(--text-secondary);" id="batchProgressCount">0 / 0 completed</span>
+                    </div>
+                    <div style="height:6px; background:#dbeafe; border-radius:3px; overflow:hidden;">
+                        <div id="batchProgressFill" style="height:100%; width:0%; background:var(--blue-action); transition:width 0.3s ease;"></div>
+                    </div>
+                    <div style="font-size:12px; color:var(--text-secondary); margin-top:6px;" id="batchCurrentItem">Processing lead…</div>
+                </div>
+
+                <!-- Table of Outbox Drafts -->
+                <div class="enterprise-card" style="padding:0; overflow:hidden;">
+                    <div class="card-title-bar" style="padding:16px 20px; margin:0; border-bottom:1px solid var(--border-light);">
+                        <div>
+                            <div class="card-heading">Generated Communications Queue</div>
+                            <div class="card-subheading">Technical cold pitches personalized for industrial clients.</div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive" style="border:none; border-radius:0;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Company</th>
+                                    <th>Target Recipient</th>
+                                    <th>Subject Line</th>
+                                    <th>Created At</th>
+                                    <th>Status</th>
+                                    <th style="text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="draftsTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Clean Empty State -->
+                    <div class="empty-state-panel" id="draftsEmptyState" style="display:none; border:none; margin:0;">
+                        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                            <circle cx="18" cy="19" r="3"></circle>
+                            <path d="m17 19 1 1 2-2"></path>
+                        </svg>
+                        <div class="empty-state-title">You're all caught up</div>
+                        <p class="empty-state-desc">Newly generated sales emails will appear here for review. You can import new leads or enter customer requirements to generate drafts.</p>
+                        <button class="btn-action-primary" onclick="navigateTo('leads')">
+                            Add Leads
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 SCREEN 2: NEW LEADS & FILE INGESTION
+            ══════════════════════════════════════════════════════════ -->
+            <section id="viewLeads" class="workbench-view">
+                <div class="breadcrumb-bar">
+                    <span>Workspace</span>
+                    <span>/</span>
+                    <span>New Leads &amp; File Ingestion</span>
+                </div>
+
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">New Leads &amp; File Ingestion</h1>
+                        <p class="page-description">Import customer leads and prepare personalized sales communications.</p>
+                    </div>
+                </div>
+
+                <!-- Batch Upload Card -->
+                <div class="enterprise-card">
+                    <div class="card-title-bar">
+                        <div>
+                            <div class="card-heading">Batch Lead Import</div>
+                            <div class="card-subheading">Upload a spreadsheet containing prospective client inquiries and plant demands.</div>
+                        </div>
+                    </div>
+
+                    <!-- Direct Send Option Panel -->
+                    <div class="option-panel option-panel-warning">
+                        <div class="option-info">
+                            <div class="option-title">Direct Send Mode (Skip Review Stage)</div>
+                            <div class="option-desc">When enabled, AI will draft and dispatch emails immediately via Google OAuth without waiting in the outbox queue.</div>
+                        </div>
+                        <label style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; cursor:pointer;">
+                            <input type="checkbox" id="chkAutoSendBatch" style="width:17px; height:17px; cursor:pointer;">
+                            Auto-Send Directly
+                        </label>
+                    </div>
+
+                    <!-- Dropzone -->
+                    <div class="dropzone-enterprise" id="batchDropzone"
+                         onclick="document.getElementById('fileUploadInput').click()"
+                         ondragover="event.preventDefault(); this.classList.add('dragover');"
+                         ondragleave="this.classList.remove('dragover');"
+                         ondrop="handleFileDrop(event)">
+                        <input type="file" id="fileUploadInput" accept=".xlsx,.csv" onchange="handleFileSelected(event)">
+                        <div class="dropzone-icon-wrap">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <div class="dropzone-heading" id="dropzoneHeaderTxt">Click to browse or drop leads file here</div>
+                        <div class="dropzone-support">Accepted file formats: Microsoft Excel (.xlsx) and CSV (.csv) up to 25MB.</div>
+                    </div>
+
+                    <!-- Import Processing Summary Card (Appears after upload) -->
+                    <div id="uploadSummaryCard" style="display:none; margin-top:20px; padding:16px; border-radius:var(--radius-md); border:1px solid var(--border-light); background:var(--surface-subtle);">
+                        <div style="font-weight:600; font-size:13.5px; color:var(--navy-primary); margin-bottom:10px;">Import Results Summary</div>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px;">
+                            <div>
+                                <span style="font-size:11.5px; color:var(--text-secondary);">Total Records</span>
+                                <div style="font-size:18px; font-weight:700; color:var(--text-dark);" id="summaryTotalRecords">0</div>
+                            </div>
+                            <div>
+                                <span style="font-size:11.5px; color:var(--text-secondary);">Valid Leads</span>
+                                <div style="font-size:18px; font-weight:700; color:var(--status-success);" id="summaryValidLeads">0</div>
+                            </div>
+                            <div>
+                                <span style="font-size:11.5px; color:var(--text-secondary);">Invalid Rows</span>
+                                <div style="font-size:18px; font-weight:700; color:var(--text-muted);" id="summaryInvalidRows">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Single Lead Entry Card -->
+                <div class="enterprise-card">
+                    <div class="card-title-bar">
+                        <div>
+                            <div class="card-heading">Single Customer Lead Entry</div>
+                            <div class="card-subheading">Enter individual plant requirements to generate a consultative application proposal.</div>
+                        </div>
+                    </div>
+
+                    <form id="singleLeadForm" onsubmit="submitSingleLead(event)">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                            <div class="form-group">
+                                <label class="form-label">Company Name <span class="required-star">*</span></label>
+                                <input type="text" class="form-control" id="singleCompany" placeholder="Enter company or plant name (e.g. UltraTech Cement, Reliance)" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Target Email Address <span class="required-star">*</span></label>
+                                <input type="email" class="form-control" id="singleEmail" placeholder="Enter a valid business email address" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Customer Requirement / Application Demand <span class="required-star">*</span></label>
+                            <textarea class="form-control" id="singleDemand" rows="4" placeholder="Describe the industrial process, material, operating temperature/pressure, or measurement challenge (e.g. High-temperature clinker silo level measurement or viscous fly ash hopper)..." required></textarea>
+                            <div class="form-hint">The AI consultative engine maps these process conditions to SAPCON's verified product models.</div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:24px; padding-top:16px; border-top:1px solid var(--border-light);">
+                            <label style="display:flex; align-items:center; gap:8px; font-weight:500; font-size:13px; color:var(--text-secondary); cursor:pointer;">
+                                <input type="checkbox" id="chkAutoSendSingle" style="width:16px; height:16px;">
+                                Direct Send Immediately (Skip Queue Review)
+                            </label>
+
+                            <div style="display:flex; gap:10px;">
+                                <button type="reset" class="btn-action-secondary">
+                                    Reset
+                                </button>
+                                <button type="submit" class="btn-action-primary" id="btnSubmitSingle">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    Draft &amp; Queue for Review
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Loading Curtain for Form Submission -->
+                    <div class="loading-curtain" id="leadFormLoader">
+                        <div class="enterprise-spinner"></div>
+                        <div style="font-weight:600; font-size:14px; color:var(--navy-primary);">Analyzing Technical Application…</div>
+                        <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">Consulting SAPCON instrumentation catalog</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 SCREEN 3: CLIENT INQUIRIES & TECHNICAL REPLIES
+            ══════════════════════════════════════════════════════════ -->
+            <section id="viewInquiries" class="workbench-view">
+                <div class="breadcrumb-bar">
+                    <span>Workspace</span>
+                    <span>/</span>
+                    <span>Client Inquiries &amp; Technical Replies</span>
+                </div>
+
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Client Inquiries &amp; Technical Replies</h1>
+                        <p class="page-description">Review customer messages and prepare accurate, consultative technical responses.</p>
+                    </div>
+                    <div class="page-header-actions">
+                        <button class="btn-action-secondary" onclick="loadInboxMessages()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                            </svg>
+                            Fetch Latest Inquiries
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Two-Panel Email Workspace -->
+                <div class="inquiry-split-view">
+
+                    <!-- Left Panel: Email Inquiry List -->
+                    <div class="inbox-list-column">
+                        <div class="inbox-toolbar">
+                            <span style="font-weight:600; font-size:13px; color:var(--navy-primary);">Incoming Messages</span>
+                            <span style="font-size:12px; color:var(--text-secondary);" id="inboxCountLabel">0 messages</span>
+                        </div>
+
+                        <div class="inbox-scroll-list" id="inboxMessagesContainer">
+                            <!-- Populated dynamically -->
+                        </div>
+
+                        <!-- Empty Inbox State -->
+                        <div class="empty-state-panel" id="inboxEmptyState" style="display:none; border:none; padding:40px 16px;">
+                            <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                            </svg>
+                            <div class="empty-state-title" style="font-size:14px;">No customer inquiries found</div>
+                            <p class="empty-state-desc" style="font-size:12px; margin-bottom:12px;">Messages received by your authenticated Google Account will appear here.</p>
+                            <button class="btn-action-secondary btn-table-action" onclick="loadInboxMessages()">Refresh Inbox</button>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Email Detail & Technical Reply Composer -->
+                    <div class="inbox-detail-column" id="inboxDetailColumn">
+                        <div id="noEmailSelectedPlaceholder" style="text-align:center; padding:120px 20px; color:var(--text-muted);">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px; color:var(--border-mid);">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                            <div style="font-size:15px; font-weight:500; color:var(--text-secondary);">Select an inquiry from the left panel to review</div>
+                            <div style="font-size:12.5px; margin-top:4px;">You can view the full customer email and formulate a consultative technical reply.</div>
+                        </div>
+
+                        <!-- Selected Email Viewer & Composer (Hidden by default) -->
+                        <div id="emailPreviewWorkspace" style="display:none;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+                                <div>
+                                    <h3 style="font-size:18px; font-weight:700; color:var(--navy-primary);" id="detailSubject">Subject</h3>
+                                    <div style="font-size:12.5px; color:var(--text-secondary); margin-top:4px;" id="detailDate">Received date</div>
+                                </div>
+                                <button class="btn-action-primary" id="btnGenerateReplyAI" onclick="requestAIReplyDraft()">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                    Generate Technical Reply
+                                </button>
+                            </div>
+
+                            <div class="inquiry-meta-box">
+                                <div class="inquiry-meta-row">
+                                    <span class="inquiry-meta-label">From:</span>
+                                    <span class="inquiry-meta-value" id="detailFrom">sender@client.com</span>
+                                </div>
+                                <div class="inquiry-meta-row">
+                                    <span class="inquiry-meta-label">Email ID:</span>
+                                    <span class="inquiry-meta-value" id="detailFromEmail" style="font-family:'JetBrains Mono', monospace; font-size:12px;">sender@client.com</span>
+                                </div>
+                            </div>
+
+                            <!-- Full Message Body Content View (with toggle between HTML view & Text view) -->
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <span style="font-size:12px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Customer Message Content</span>
+                                <div style="display:flex; gap:6px;">
+                                    <button type="button" class="btn-action-secondary btn-table-action" id="btnInquiryTextView" onclick="toggleInquiryFormat('text')">Text View</button>
+                                    <button type="button" class="btn-action-secondary btn-table-action" id="btnInquiryHtmlView" onclick="toggleInquiryFormat('html')">Rendered HTML View</button>
+                                </div>
+                            </div>
+
+                            <div class="inquiry-body-view" id="detailBody">
+                                Full message body content...
+                            </div>
+                            <iframe class="inquiry-body-iframe" id="detailBodyIframe"></iframe>
+
+                            <!-- Technical Response Editor Area -->
+                            <div class="reply-composer-card" id="replyComposerCard" style="display:none;">
+                                <div style="font-size:14px; font-weight:600; color:var(--navy-primary); margin-bottom:12px; display:flex; align-items:center; justify-content:space-between;">
+                                    <span>Technical Reply Draft</span>
+                                    <span style="font-size:11.5px; font-weight:500; color:var(--status-success);">Consultative Recommendation</span>
+                                </div>
+
+                                <div class="ai-analysis-tag" id="replyAnalysisTag" style="display:none;">
+                                    <strong>Application Analysis:</strong> <span id="replyAnalysisText"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Subject</label>
+                                    <input type="text" class="form-control" id="replySubjectInput">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Consultative Reply Body</label>
+                                    <textarea class="form-control" id="replyBodyInput" rows="10" style="font-size:13px; line-height:1.6;"></textarea>
+                                </div>
+
+                                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+                                    <button class="btn-action-secondary" onclick="closeReplyComposer()">
+                                        Cancel
+                                    </button>
+                                    <button class="btn-action-primary" onclick="submitInquiryReply()">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                        </svg>
+                                        Send Technical Reply
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Inquiry Loader Curtain -->
+                        <div class="loading-curtain" id="inboxDetailLoader">
+                            <div class="enterprise-spinner"></div>
+                            <div style="font-weight:600; font-size:14px; color:var(--navy-primary);" id="inboxLoaderHeader">Formulating Technical Response…</div>
+                            <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;" id="inboxLoaderSub">Matching process specifications against SAPCON instrumentation</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         MODAL: REVIEW & EDIT OUTBOX DRAFT
+    ══════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="draftReviewModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div>
+                    <h3 style="font-size:16px; font-weight:700; color:var(--navy-primary);" id="modalDraftCompany">Company Name</h3>
+                    <div style="font-size:12.5px; color:var(--text-secondary); margin-top:2px;" id="modalDraftRecipient">Recipient: client@company.com</div>
+                </div>
+                <button class="btn-action-secondary btn-table-action" onclick="closeReviewModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Email Subject Line</label>
+                    <input type="text" class="form-control" id="modalDraftSubject">
+                </div>
+
+                <div class="form-group">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <label class="form-label" style="margin-bottom:0;">Message Content</label>
+                        <div style="display:flex; gap:6px;">
+                            <button type="button" class="btn-action-secondary btn-table-action" id="btnTabPreview" onclick="setModalTab('preview')">Formatted Preview</button>
+                            <button type="button" class="btn-action-secondary btn-table-action" id="btnTabCode" onclick="setModalTab('code')">Edit HTML Code</button>
+                        </div>
+                    </div>
+                    <div id="modalPreviewWrap" style="height:440px; border:1px solid var(--border-mid); border-radius:var(--radius-md); overflow:hidden;">
+                        <iframe id="modalPreviewFrame" style="width:100%; height:100%; border:none;"></iframe>
+                    </div>
+                    <div id="modalCodeWrap" style="display:none;">
+                        <textarea class="form-control" id="modalBodyTextarea" rows="18" style="font-family:'JetBrains Mono', monospace; font-size:12px;" oninput="syncModalIframe()"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-action-secondary" onclick="saveDraftEditsToCache()">
+                    Save Changes
+                </button>
+                <button class="btn-action-success" onclick="approveAndDispatchModalDraft()">
+                    Approve &amp; Send Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         MODAL: SAPCON PRODUCT SOLUTIONS REFERENCE
+    ══════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="productCatalogModal">
+        <div class="modal-dialog" style="max-width:840px;">
+            <div class="modal-header">
+                <div>
+                    <h3 style="font-size:16px; font-weight:700; color:var(--navy-primary);">SAPCON Product Solutions Reference</h3>
+                    <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Verified industrial instrumentation catalog &amp; process application mappings.</div>
+                </div>
+                <button class="btn-action-secondary btn-table-action" onclick="closeProductCatalogModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body" id="catalogModalContent" style="max-height:65vh; overflow-y:auto;">
+                <!-- Filled via /api/profile -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-action-secondary" onclick="closeProductCatalogModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         MODAL: USER AUTHENTICATION (SIGN IN & SIGN UP)
+    ══════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="userAuthModal">
+        <div class="modal-dialog" style="max-width:440px;">
+            <div class="modal-header">
+                <div>
+                    <h3 style="font-size:17px; font-weight:700; color:var(--navy-primary);" id="authModalTitle">Sign In</h3>
+                    <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;" id="authModalSubtitle">Access your SAPCON Sales Workbench</div>
+                </div>
+                <button class="btn-action-secondary btn-table-action" onclick="closeAuthModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body" style="padding:20px 24px;">
+                <!-- Tab switcher: Sign In vs Sign Up -->
+                <div style="display:flex; background:var(--surface-subtle); padding:4px; border-radius:var(--radius-sm); margin-bottom:18px; border:1px solid var(--border-light);">
+                    <button type="button" id="tabAuthLogin" onclick="switchAuthTab('login')" style="flex:1; border:none; padding:8px; font-weight:600; font-size:12.5px; border-radius:4px; cursor:pointer; background:var(--surface); color:var(--navy-primary); box-shadow:var(--shadow-subtle);">Sign In</button>
+                    <button type="button" id="tabAuthSignup" onclick="switchAuthTab('signup')" style="flex:1; border:none; padding:8px; font-weight:600; font-size:12.5px; border-radius:4px; cursor:pointer; background:transparent; color:var(--text-secondary);">New Account (Sign Up)</button>
+                </div>
+
+                <!-- Sign In Form -->
+                <form id="formWebLogin" onsubmit="handleWebLoginSubmit(event)">
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:6px;">Email Address</label>
+                        <input type="email" id="webLoginEmail" required placeholder="e.g. sales@sapcon.in" style="width:100%; padding:10px 12px; border:1px solid var(--border-light); border-radius:var(--radius-sm); font-size:13px; outline:none;">
+                    </div>
+                    <div style="margin-bottom:18px;">
+                        <label style="display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:6px;">Password</label>
+                        <input type="password" id="webLoginPassword" required placeholder="Enter password" style="width:100%; padding:10px 12px; border:1px solid var(--border-light); border-radius:var(--radius-sm); font-size:13px; outline:none;">
+                    </div>
+                    <button type="submit" class="btn-action-primary" id="btnWebLoginSubmit" style="width:100%; justify-content:center; padding:10px; margin-bottom:12px;">Sign In</button>
+                </form>
+
+                <!-- Sign Up Form -->
+                <form id="formWebSignup" onsubmit="handleWebSignupSubmit(event)" style="display:none;">
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:4px;">Full Name</label>
+                        <input type="text" id="webSignupName" required placeholder="e.g. Elvis Joseph" style="width:100%; padding:10px 12px; border:1px solid var(--border-light); border-radius:var(--radius-sm); font-size:13px; outline:none;">
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:4px;">Email Address</label>
+                        <input type="email" id="webSignupEmail" required placeholder="e.g. elvis@sapconinstruments.com" style="width:100%; padding:10px 12px; border:1px solid var(--border-light); border-radius:var(--radius-sm); font-size:13px; outline:none;">
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:4px;">Password</label>
+                        <input type="password" id="webSignupPassword" required placeholder="Minimum 6 characters" style="width:100%; padding:10px 12px; border:1px solid var(--border-light); border-radius:var(--radius-sm); font-size:13px; outline:none;">
+                    </div>
+                    <div style="margin-bottom:16px;">
+                        <label style="display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:4px;">Confirm Password</label>
+                        <input type="password" id="webSignupConfirm" required placeholder="Repeat password" style="width:100%; padding:10px 12px; border:1px solid var(--border-light); border-radius:var(--radius-sm); font-size:13px; outline:none;">
+                    </div>
+                    <button type="submit" class="btn-action-primary" id="btnWebSignupSubmit" style="width:100%; justify-content:center; padding:10px; margin-bottom:12px;">Create Account</button>
+                </form>
+
+                <div style="text-align:center; font-size:11.5px; color:var(--text-muted); margin:12px 0;">OR</div>
+
+                <!-- Google OAuth Option -->
+                <a href="/auth/login" class="btn-action-secondary" style="width:100%; justify-content:center; padding:10px; display:inline-flex; align-items:center; gap:8px; text-decoration:none; color:var(--navy-primary); font-weight:600;">
+                    <svg width="15" height="15" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    Continue with Google
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Toast Feedback -->
+    <div class="toast-notification" id="appToast">Notification message</div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         CLIENT APPLICATION JAVASCRIPT
+    ══════════════════════════════════════════════════════════════ -->
+    <script>
+        // Application State
+        let currentQueue = [];
+        let inboxCache = [];
+        let activeDraft = null;
+        let selectedInboxMsg = null;
+        let isUserAuthenticated = false;
+        let userEmailAddress = null;
+
+        // ──────────────────────────────────────────────
+        // Initialization & Auth Checking
+        // ──────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            initSidebar();
+            checkAuthentication();
+            loadQueueData();
+            loadProfileReference();
+
+            // Refresh queue interval if batch job is active
+            setInterval(checkBatchProgress, 3500);
+        });
+
+        function initSidebar() {
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            const layout = document.getElementById('appLayout');
+            const sidebar = document.getElementById('appSidebar');
+
+            toggleBtn.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.toggle('mobile-open');
+                } else {
+                    sidebar.classList.toggle('collapsed');
+                    layout.classList.toggle('sidebar-collapsed');
+                }
+            });
+        }
+
+        // User Auth Modal Controls
+        function openAuthModal(tab = 'login') {
+            document.getElementById('userAuthModal').style.display = 'flex';
+            switchAuthTab(tab);
+        }
+
+        function closeAuthModal() {
+            document.getElementById('userAuthModal').style.display = 'none';
+        }
+
+        function switchAuthTab(tab) {
+            const isLogin = tab === 'login';
+            document.getElementById('formWebLogin').style.display = isLogin ? 'block' : 'none';
+            document.getElementById('formWebSignup').style.display = isLogin ? 'none' : 'block';
+            document.getElementById('authModalTitle').textContent = isLogin ? 'Sign In' : 'Create New Account';
+            document.getElementById('authModalSubtitle').textContent = isLogin ? 'Access your SAPCON Sales Workbench' : 'Join SAPCON Sales Workbench';
+
+            const tabLogin = document.getElementById('tabAuthLogin');
+            const tabSignup = document.getElementById('tabAuthSignup');
+            if (isLogin) {
+                tabLogin.style.background = 'var(--surface)';
+                tabLogin.style.color = 'var(--navy-primary)';
+                tabLogin.style.boxShadow = 'var(--shadow-subtle)';
+                tabSignup.style.background = 'transparent';
+                tabSignup.style.color = 'var(--text-secondary)';
+                tabSignup.style.boxShadow = 'none';
+            } else {
+                tabSignup.style.background = 'var(--surface)';
+                tabSignup.style.color = 'var(--navy-primary)';
+                tabSignup.style.boxShadow = 'var(--shadow-subtle)';
+                tabLogin.style.background = 'transparent';
+                tabLogin.style.color = 'var(--text-secondary)';
+                tabLogin.style.boxShadow = 'none';
+            }
+        }
+
+        async function handleWebLoginSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('webLoginEmail').value.trim();
+            const password = document.getElementById('webLoginPassword').value;
+            const btn = document.getElementById('btnWebLoginSubmit');
+
+            btn.disabled = true;
+            btn.textContent = 'Signing in…';
+
+            try {
+                const res = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    localStorage.setItem('sapcon_user', JSON.stringify(data.user));
+                    showToast('Welcome back, ' + (data.user.name || data.user.email) + '!');
+                    closeAuthModal();
+                    checkAuthentication();
+                } else {
+                    alert('Sign In Failed: ' + (data.detail || data.message || 'Check your credentials'));
+                }
+            } catch (err) {
+                alert('Sign in error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        }
+
+        async function handleWebSignupSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('webSignupName').value.trim();
+            const email = document.getElementById('webSignupEmail').value.trim();
+            const password = document.getElementById('webSignupPassword').value;
+            const confirm = document.getElementById('webSignupConfirm').value;
+            const btn = document.getElementById('btnWebSignupSubmit');
+
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters long.');
+                return;
+            }
+            if (password !== confirm) {
+                alert('Passwords do not match. Please verify.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Creating account…';
+
+            try {
+                const res = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    localStorage.setItem('sapcon_user', JSON.stringify(data.user));
+                    showToast('Account registered successfully! Welcome, ' + data.user.name);
+                    closeAuthModal();
+                    checkAuthentication();
+                } else {
+                    alert('Sign Up Failed: ' + (data.detail || data.message || 'Could not register'));
+                }
+            } catch (err) {
+                alert('Sign up error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        }
+
+        async function checkAuthentication() {
+            try {
+                const res = await fetch('/auth/status');
+                const data = await res.json();
+                isUserAuthenticated = data.authenticated;
+                userEmailAddress = data.email;
+
+                const storedUser = localStorage.getItem('sapcon_user') ? JSON.parse(localStorage.getItem('sapcon_user')) : null;
+                const badge = document.getElementById('headerAuthBadge');
+                const emailTxt = document.getElementById('headerAuthEmail');
+                const loginBtn = document.getElementById('btnHeaderLogin');
+                const logoutBtn = document.getElementById('btnHeaderLogout');
+                const globalAlert = document.getElementById('globalAuthAlert');
+                const userBtn = document.getElementById('btnUserAccount');
+
+                if (storedUser) {
+                    userBtn.textContent = '👤 ' + (storedUser.name || storedUser.email.split('@')[0]);
+                } else {
+                    userBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Sign In / Sign Up`;
+                }
+
+                if (isUserAuthenticated && userEmailAddress) {
+                    badge.classList.add('connected');
+                    emailTxt.textContent = userEmailAddress;
+                    loginBtn.style.display = 'none';
+                    logoutBtn.style.display = 'inline-block';
+                    if (globalAlert) globalAlert.style.display = 'none';
+                } else {
+                    badge.classList.remove('connected');
+                    emailTxt.textContent = 'Google Not Connected';
+                    loginBtn.style.display = 'inline-flex';
+                    logoutBtn.style.display = 'none';
+                    if (globalAlert) globalAlert.style.display = 'flex';
+                }
+            } catch (err) {
+                console.warn('Auth status check error:', err);
+            }
+        }
+
+        async function handleAppLogout() {
+            try {
+                await fetch('/auth/logout', { method: 'POST' });
+                localStorage.removeItem('sapcon_user');
+                showToast('Signed out of session and Google Account.');
+                checkAuthentication();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function notifyAuthRequired() {
+            const alert = document.getElementById('globalAuthAlert');
+            if (alert) {
+                alert.style.display = 'flex';
+                alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            if (confirm("Google Account Connection Required\n\nAll outgoing emails are sent directly through your authenticated Google Account (SMTP has been removed).\n\nWould you like to connect your Google account now?")) {
+                window.location.href = '/auth/login';
+            }
+        }
+
+        // ──────────────────────────────────────────────
+        // Navigation View Switcher
+        // ──────────────────────────────────────────────
+        function navigateTo(viewId) {
+            document.querySelectorAll('.workbench-view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+
+            if (viewId === 'queue') {
+                document.getElementById('viewQueue').classList.add('active');
+                document.getElementById('navItemQueue').classList.add('active');
+                loadQueueData();
+            } else if (viewId === 'leads') {
+                document.getElementById('viewLeads').classList.add('active');
+                document.getElementById('navItemLeads').classList.add('active');
+            } else if (viewId === 'inquiries') {
+                document.getElementById('viewInquiries').classList.add('active');
+                document.getElementById('navItemInquiries').classList.add('active');
+                loadInboxMessages();
+            }
+
+            // Close mobile drawer if open
+            if (window.innerWidth <= 768) {
+                document.getElementById('appSidebar').classList.remove('mobile-open');
+            }
+        }
+
+        // ──────────────────────────────────────────────
+        // SCREEN 1: OUTBOX DRAFTS WORKSPACE
+        // ──────────────────────────────────────────────
+        async function loadQueueData() {
+            try {
+                const res = await fetch('/api/queue');
+                const data = await res.json();
+                if (data.success) {
+                    currentQueue = data.queue || [];
+                    renderDraftsTable(currentQueue);
+                    updateMetrics(data.metrics || {});
+                    renderBatchJobStatus(data.job_status);
+                }
+            } catch (err) {
+                console.error('Failed to load queue:', err);
+            }
+        }
+
+        function updateMetrics(metrics) {
+            document.getElementById('metricPendingCount').textContent = metrics.pending_review || currentQueue.length || 0;
+            document.getElementById('metricSentCount').textContent = metrics.sent || 0;
+            document.getElementById('metricTotalLeads').textContent = metrics.total_leads || 0;
+            document.getElementById('sidebarQueueCount').textContent = currentQueue.length || 0;
+        }
+
+        function renderDraftsTable(drafts) {
+            const tbody = document.getElementById('draftsTableBody');
+            const emptyState = document.getElementById('draftsEmptyState');
+            const bulkBtn = document.getElementById('btnBulkSendAll');
+
+            if (!drafts || drafts.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.style.display = 'block';
+                if (bulkBtn) bulkBtn.style.display = 'none';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            if (bulkBtn) bulkBtn.style.display = 'inline-flex';
+
+            tbody.innerHTML = drafts.map(d => `
+                <tr id="draft_row_${d.queue_id}">
+                    <td style="font-weight:600; color:var(--navy-primary);">${escapeHtml(d.company_name)}</td>
+                    <td style="font-family:'JetBrains Mono', monospace; font-size:12px;">${escapeHtml(d.email)}</td>
+                    <td style="max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(d.subject)}">
+                        ${escapeHtml(d.subject)}
+                    </td>
+                    <td style="color:var(--text-secondary); font-size:12px;">${escapeHtml(d.created_at || 'Just now')}</td>
+                    <td>
+                        <span class="badge pending">Pending Review</span>
+                    </td>
+                    <td style="text-align:right; white-space:nowrap;">
+                        <button class="btn-action-primary btn-table-action" onclick="directSendDraft('${d.queue_id}')" style="margin-right:6px;">
+                            Send
+                        </button>
+                        <button class="btn-action-secondary btn-table-action" onclick="openReviewModal('${d.queue_id}')" style="margin-right:6px;">
+                            Review &amp; Edit
+                        </button>
+                        <button class="btn-action-danger btn-table-action" onclick="discardDraft('${d.queue_id}')">
+                            Discard
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function directSendDraft(queueId) {
+            if (!isUserAuthenticated) {
+                notifyAuthRequired();
+                return;
+            }
+
+            const draft = currentQueue.find(q => q.queue_id === queueId);
+            if (!draft) return;
+
+            showToast(`Dispatching email to ${draft.email}…`);
+            const fd = new FormData();
+            fd.append('queue_id', draft.queue_id);
+            fd.append('lead_id', draft.lead_id);
+            fd.append('subject', draft.subject);
+            fd.append('body', draft.body);
+
+            try {
+                const res = await fetch('/api/approve_send', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showToast(`Dispatched to ${draft.email} from connected account!`);
+                    loadQueueData();
+                } else if (res.status === 401 || (data.detail && data.detail.includes('GOOGLE_AUTH_REQUIRED'))) {
+                    notifyAuthRequired();
+                } else {
+                    alert('Dispatch error: ' + (data.detail || 'Failed'));
+                }
+            } catch (err) {
+                alert('Send failed: ' + err.message);
+            }
+        }
+
+        async function handleBulkDispatch() {
+            if (!isUserAuthenticated) {
+                notifyAuthRequired();
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to approve and send all ${currentQueue.length} emails directly via your Google Account?`)) {
+                return;
+            }
+
+            showToast('Dispatching queue batch…');
+            try {
+                const res = await fetch('/api/queue/approve_all', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showToast(data.message || 'All emails dispatched!');
+                    loadQueueData();
+                } else if (res.status === 401 || (data.detail && data.detail.includes('GOOGLE_AUTH_REQUIRED'))) {
+                    notifyAuthRequired();
+                } else {
+                    alert('Error: ' + data.detail);
+                }
+            } catch (err) {
+                alert('Bulk send failed: ' + err.message);
+            }
+        }
+
+        async function discardDraft(queueId) {
+            if (!confirm('Remove this draft from the cache queue?')) return;
+            try {
+                await fetch(`/api/discard_draft/${queueId}`, { method: 'DELETE' });
+                showToast('Draft removed from queue.');
+                loadQueueData();
+            } catch (err) {
+                alert('Discard failed: ' + err.message);
+            }
+        }
+
+        // Modal Review Controls
+        function openReviewModal(queueId) {
+            const draft = currentQueue.find(q => q.queue_id === queueId);
+            if (!draft) return;
+
+            activeDraft = draft;
+            document.getElementById('modalDraftCompany').textContent = draft.company_name;
+            document.getElementById('modalDraftRecipient').textContent = `Target: ${draft.email}`;
+            document.getElementById('modalDraftSubject').value = draft.subject;
+            document.getElementById('modalBodyTextarea').value = draft.body;
+
+            setModalTab('preview');
+            syncModalIframe();
+
+            document.getElementById('draftReviewModal').style.display = 'flex';
+        }
+
+        function closeReviewModal() {
+            document.getElementById('draftReviewModal').style.display = 'none';
+            activeDraft = null;
+        }
+
+        function setModalTab(tab) {
+            const pWrap = document.getElementById('modalPreviewWrap');
+            const cWrap = document.getElementById('modalCodeWrap');
+            const btnP = document.getElementById('btnTabPreview');
+            const btnC = document.getElementById('btnTabCode');
+
+            if (tab === 'preview') {
+                pWrap.style.display = 'block';
+                cWrap.style.display = 'none';
+                btnP.classList.add('btn-action-primary');
+                btnP.classList.remove('btn-action-secondary');
+                btnC.classList.remove('btn-action-primary');
+                btnC.classList.add('btn-action-secondary');
+                syncModalIframe();
+            } else {
+                pWrap.style.display = 'none';
+                cWrap.style.display = 'block';
+                btnC.classList.add('btn-action-primary');
+                btnC.classList.remove('btn-action-secondary');
+                btnP.classList.remove('btn-action-primary');
+                btnP.classList.add('btn-action-secondary');
+            }
+        }
+
+        function syncModalIframe() {
+            const code = document.getElementById('modalBodyTextarea').value;
+            const iframe = document.getElementById('modalPreviewFrame');
+            if (iframe && iframe.contentWindow) {
+                const doc = iframe.contentWindow.document;
+                doc.open();
+                doc.write(code);
+                doc.close();
+            }
+        }
+
+        async function saveDraftEditsToCache() {
+            if (!activeDraft) return;
+            const subj = document.getElementById('modalDraftSubject').value;
+            const body = document.getElementById('modalBodyTextarea').value;
+
+            const fd = new FormData();
+            fd.append('queue_id', activeDraft.queue_id);
+            fd.append('subject', subj);
+            fd.append('body', body);
+
+            try {
+                const res = await fetch('/api/update_draft', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Draft changes saved to queue cache.');
+                    activeDraft.subject = subj;
+                    activeDraft.body = body;
+                    loadQueueData();
+                }
+            } catch (err) {
+                alert('Save error: ' + err.message);
+            }
+        }
+
+        async function approveAndDispatchModalDraft() {
+            if (!isUserAuthenticated) {
+                notifyAuthRequired();
+                return;
+            }
+            if (!activeDraft) return;
+
+            const subj = document.getElementById('modalDraftSubject').value;
+            const body = document.getElementById('modalBodyTextarea').value;
+
+            const fd = new FormData();
+            fd.append('queue_id', activeDraft.queue_id);
+            fd.append('lead_id', activeDraft.lead_id);
+            fd.append('subject', subj);
+            fd.append('body', body);
+
+            showToast(`Dispatching to ${activeDraft.email}…`);
+            try {
+                const res = await fetch('/api/approve_send', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showToast(`Dispatched to ${activeDraft.email}!`);
+                    closeReviewModal();
+                    loadQueueData();
+                } else if (res.status === 401 || (data.detail && data.detail.includes('GOOGLE_AUTH_REQUIRED'))) {
+                    notifyAuthRequired();
+                } else {
+                    alert('Error: ' + data.detail);
+                }
+            } catch (err) {
+                alert('Send failed: ' + err.message);
+            }
+        }
+
+        // Background Batch Progress Tracking
+        function renderBatchJobStatus(status) {
+            const banner = document.getElementById('batchProgressBar');
+            if (!status || !status.is_processing) {
+                if (banner) banner.style.display = 'none';
+                return;
+            }
+
+            banner.style.display = 'block';
+            const total = status.total || 1;
+            const completed = status.completed || 0;
+            const pct = Math.min(100, Math.round((completed / total) * 100));
+
+            document.getElementById('batchProgressFill').style.width = pct + '%';
+            document.getElementById('batchProgressCount').textContent = `${completed} / ${total} completed (${pct}%)`;
+            document.getElementById('batchCurrentItem').textContent = status.current_company ? `Processing: ${status.current_company}` : 'Formulating consultative emails…';
+        }
+
+        async function checkBatchProgress() {
+            try {
+                const res = await fetch('/api/queue');
+                const data = await res.json();
+                if (data.job_status && data.job_status.is_processing) {
+                    renderBatchJobStatus(data.job_status);
+                    currentQueue = data.queue || [];
+                    renderDraftsTable(currentQueue);
+                } else {
+                    const banner = document.getElementById('batchProgressBar');
+                    if (banner && banner.style.display === 'block') {
+                        banner.style.display = 'none';
+                        loadQueueData();
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // ──────────────────────────────────────────────
+        // SCREEN 2: NEW LEADS & INGESTION
+        // ──────────────────────────────────────────────
+        function handleFileDrop(e) {
+            e.preventDefault();
+            document.getElementById('batchDropzone').classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) uploadLeadsFile(files[0]);
+        }
+
+        function handleFileSelected(e) {
+            const files = e.target.files;
+            if (files && files.length > 0) uploadLeadsFile(files[0]);
+        }
+
+        async function uploadLeadsFile(file) {
+            const isAutoSend = document.getElementById('chkAutoSendBatch').checked;
+            if (isAutoSend && !isUserAuthenticated) {
+                notifyAuthRequired();
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('auto_send', isAutoSend);
+
+            document.getElementById('dropzoneHeaderTxt').textContent = `Uploading ${file.name}…`;
+
+            try {
+                const res = await fetch('/api/upload_file', { method: 'POST', body: fd });
+                const data = await res.json();
+
+                document.getElementById('dropzoneHeaderTxt').textContent = 'Click to browse or drop leads file here';
+
+                if (data.success) {
+                    showToast(`Successfully uploaded: ${data.message}`);
+
+                    // Show breakdown summary card
+                    const sumCard = document.getElementById('uploadSummaryCard');
+                    sumCard.style.display = 'block';
+                    document.getElementById('summaryTotalRecords').textContent = data.total_detected || data.count;
+                    document.getElementById('summaryValidLeads').textContent = data.valid_leads || data.count;
+                    document.getElementById('summaryInvalidRows').textContent = data.invalid_leads || 0;
+
+                    // Automatically direct to Outbox Review
+                    setTimeout(() => {
+                        navigateTo('queue');
+                    }, 1200);
+                } else {
+                    alert('Upload failed: ' + (data.detail || 'Could not parse spreadsheet'));
+                }
+            } catch (err) {
+                alert('Error uploading file: ' + err.message);
+                document.getElementById('dropzoneHeaderTxt').textContent = 'Click to browse or drop leads file here';
+            }
+        }
+
+        async function submitSingleLead(e) {
+            e.preventDefault();
+            const isAutoSend = document.getElementById('chkAutoSendSingle').checked;
+            if (isAutoSend && !isUserAuthenticated) {
+                notifyAuthRequired();
+                return;
+            }
+
+            const company = document.getElementById('singleCompany').value.trim();
+            const email = document.getElementById('singleEmail').value.trim();
+            const demand = document.getElementById('singleDemand').value.trim();
+
+            const fd = new FormData();
+            fd.append('company_name', company);
+            fd.append('email', email);
+            fd.append('demand', demand);
+            fd.append('auto_send', isAutoSend);
+
+            document.getElementById('leadFormLoader').style.display = 'flex';
+
+            try {
+                const res = await fetch('/api/submit_manual', { method: 'POST', body: fd });
+                const data = await res.json();
+                document.getElementById('leadFormLoader').style.display = 'none';
+
+                if (data.success) {
+                    showToast(isAutoSend ? 'Dispatched email directly to customer!' : 'Personalized draft queued for review');
+                    document.getElementById('singleLeadForm').reset();
+                    navigateTo('queue');
+                } else {
+                    alert('Submission error: ' + (data.detail || 'Failed'));
+                }
+            } catch (err) {
+                document.getElementById('leadFormLoader').style.display = 'none';
+                alert('Error: ' + err.message);
+            }
+        }
+
+        // ──────────────────────────────────────────────
+        // SCREEN 3: CLIENT INQUIRIES & TWO-PANEL WORKSPACE
+        // ──────────────────────────────────────────────
+        async function loadInboxMessages() {
+            const listWrap = document.getElementById('inboxMessagesContainer');
+            const emptyState = document.getElementById('inboxEmptyState');
+            const countLabel = document.getElementById('inboxCountLabel');
+
+            listWrap.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-secondary); font-size:13px;">Synchronizing inbox…</div>';
+
+            try {
+                const res = await fetch('/api/inbox/recent');
+                const data = await res.json();
+
+                if (data.success && data.emails && data.emails.length > 0) {
+                    inboxCache = data.emails;
+                    emptyState.style.display = 'none';
+                    countLabel.textContent = `${inboxCache.length} messages`;
+                    document.getElementById('sidebarInboxCount').textContent = inboxCache.length;
+                    document.getElementById('sidebarInboxCount').style.display = 'inline-block';
+
+                    listWrap.innerHTML = inboxCache.map((msg, idx) => `
+                        <div class="inbox-message-row" id="inbox_row_${idx}" onclick="selectInboxMessage(${idx})">
+                            <div class="inbox-row-header">
+                                <div class="inbox-sender-name" title="${escapeHtml(msg.from)}">${escapeHtml(msg.from)}</div>
+                                <div class="inbox-date-txt">${escapeHtml(msg.date)}</div>
+                            </div>
+                            <div class="inbox-subject-line">${escapeHtml(msg.subject)}</div>
+                            <div class="inbox-preview-snippet">${escapeHtml(msg.preview)}</div>
+                        </div>
+                    `).join('');
+
+                    // Pre-select first email
+                    selectInboxMessage(0);
+                } else {
+                    inboxCache = [];
+                    listWrap.innerHTML = '';
+                    emptyState.style.display = 'block';
+                    countLabel.textContent = '0 messages';
+                    document.getElementById('sidebarInboxCount').style.display = 'none';
+                    document.getElementById('noEmailSelectedPlaceholder').style.display = 'block';
+                    document.getElementById('emailPreviewWorkspace').style.display = 'none';
+                }
+            } catch (err) {
+                listWrap.innerHTML = `<div style="padding:20px; text-align:center; color:var(--status-error); font-size:13px;">Failed to fetch inbox: ${err.message}</div>`;
+            }
+        }
+
+        let currentInquiryFormat = 'text';
+
+        function toggleInquiryFormat(fmt) {
+            currentInquiryFormat = fmt;
+            const textBtn = document.getElementById('btnInquiryTextView');
+            const htmlBtn = document.getElementById('btnInquiryHtmlView');
+            const bodyEl = document.getElementById('detailBody');
+            const iframeEl = document.getElementById('detailBodyIframe');
+
+            if (!selectedInboxMsg) return;
+
+            if (fmt === 'html' && selectedInboxMsg.html) {
+                textBtn.classList.remove('btn-action-primary');
+                textBtn.classList.add('btn-action-secondary');
+                htmlBtn.classList.add('btn-action-primary');
+                htmlBtn.classList.remove('btn-action-secondary');
+
+                bodyEl.style.display = 'none';
+                iframeEl.style.display = 'block';
+
+                const doc = iframeEl.contentWindow.document;
+                doc.open();
+                doc.write(selectedInboxMsg.html);
+                doc.close();
+            } else {
+                htmlBtn.classList.remove('btn-action-primary');
+                htmlBtn.classList.add('btn-action-secondary');
+                textBtn.classList.add('btn-action-primary');
+                textBtn.classList.remove('btn-action-secondary');
+
+                iframeEl.style.display = 'none';
+                bodyEl.style.display = 'block';
+                bodyEl.textContent = selectedInboxMsg.body || selectedInboxMsg.preview || '';
+            }
+        }
+
+        function selectInboxMessage(idx) {
+            const msg = inboxCache[idx];
+            if (!msg) return;
+
+            selectedInboxMsg = msg;
+
+            document.querySelectorAll('.inbox-message-row').forEach(r => r.classList.remove('selected'));
+            const row = document.getElementById(`inbox_row_${idx}`);
+            if (row) row.classList.add('selected');
+
+            document.getElementById('noEmailSelectedPlaceholder').style.display = 'none';
+            document.getElementById('emailPreviewWorkspace').style.display = 'block';
+
+            document.getElementById('detailSubject').textContent = msg.subject;
+            document.getElementById('detailDate').textContent = `Received: ${msg.date}`;
+            document.getElementById('detailFrom').textContent = msg.from;
+            document.getElementById('detailFromEmail').textContent = msg.from_email;
+
+            // Display full text or HTML
+            if (msg.html) {
+                document.getElementById('btnInquiryHtmlView').style.display = 'inline-flex';
+            } else {
+                document.getElementById('btnInquiryHtmlView').style.display = 'none';
+            }
+
+            // Default to text format
+            toggleInquiryFormat('text');
+
+            // Reset Composer
+            closeReplyComposer();
+        }
+
+        async function requestAIReplyDraft() {
+            if (!selectedInboxMsg) return;
+
+            const loader = document.getElementById('inboxDetailLoader');
+            loader.style.display = 'flex';
+
+            const fd = new FormData();
+            fd.append('from_email', selectedInboxMsg.from_email);
+            fd.append('subject', selectedInboxMsg.subject);
+            fd.append('body', selectedInboxMsg.body);
+            fd.append('message_id', selectedInboxMsg.message_id || '');
+
+            try {
+                const res = await fetch('/api/inbox/generate_reply', { method: 'POST', body: fd });
+                const data = await res.json();
+                loader.style.display = 'none';
+
+                if (data.success) {
+                    const composer = document.getElementById('replyComposerCard');
+                    composer.style.display = 'block';
+
+                    document.getElementById('replySubjectInput').value = data.reply_subject;
+                    document.getElementById('replyBodyInput').value = data.reply_body;
+
+                    if (data.summary) {
+                        const tag = document.getElementById('replyAnalysisTag');
+                        tag.style.display = 'block';
+                        document.getElementById('replyAnalysisText').textContent = data.summary;
+                    }
+
+                    composer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    alert('Draft generation failed: ' + (data.detail || 'Could not analyze inquiry'));
+                }
+            } catch (err) {
+                loader.style.display = 'none';
+                alert('Error generating reply: ' + err.message);
+            }
+        }
+
+        function closeReplyComposer() {
+            document.getElementById('replyComposerCard').style.display = 'none';
+        }
+
+        async function submitInquiryReply() {
+            if (!isUserAuthenticated) {
+                notifyAuthRequired();
+                return;
+            }
+            if (!selectedInboxMsg) return;
+
+            const toEmail = selectedInboxMsg.from_email;
+            const subj = document.getElementById('replySubjectInput').value.trim();
+            const body = document.getElementById('replyBodyInput').value.trim();
+
+            const fd = new FormData();
+            fd.append('to_email', toEmail);
+            fd.append('subject', subj);
+            fd.append('body', body);
+            fd.append('in_reply_to', selectedInboxMsg.message_id || '');
+
+            showToast(`Dispatching reply to ${toEmail}…`);
+
+            try {
+                const res = await fetch('/api/inbox/send_reply', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showToast(`Technical reply successfully sent to ${toEmail}!`);
+                    closeReplyComposer();
+                } else if (res.status === 401 || (data.detail && data.detail.includes('GOOGLE_AUTH_REQUIRED'))) {
+                    notifyAuthRequired();
+                } else {
+                    alert('Reply error: ' + (data.detail || 'Failed'));
+                }
+            } catch (err) {
+                alert('Send reply failed: ' + err.message);
+            }
+        }
+
+        // ──────────────────────────────────────────────
+        // REFERENCE MODAL: PRODUCTS & SOLUTIONS
+        // ──────────────────────────────────────────────
+        async function loadProfileReference() {
+            try {
+                const res = await fetch('/api/profile');
+                const profile = await res.json();
+                const container = document.getElementById('catalogModalContent');
+
+                if (profile && profile.product_catalog) {
+                    let html = '<div style="display:flex; flex-direction:column; gap:16px;">';
+                    for (const [catName, catItems] of Object.entries(profile.product_catalog)) {
+                        html += `
+                            <div style="background:var(--surface-subtle); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:16px;">
+                                <div style="font-weight:700; font-size:14px; color:var(--navy-primary); text-transform:capitalize; margin-bottom:8px;">
+                                    ${escapeHtml(catName.replace(/_/g, ' '))}
+                                </div>
+                                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+                        `;
+                        for (const [prodName, details] of Object.entries(catItems)) {
+                            html += `
+                                <div style="background:#ffffff; border:1px solid var(--border-light); border-radius:var(--radius-sm); padding:10px;">
+                                    <div style="font-weight:600; font-size:12.5px; color:var(--blue-action);">${escapeHtml(prodName)}</div>
+                                    <div style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;"><strong>Principle:</strong> ${escapeHtml(details.principle || '')}</div>
+                                    <div style="font-size:11.5px; color:var(--text-dark); margin-top:2px;"><strong>Best for:</strong> ${escapeHtml(details.best_for || '')}</div>
+                                </div>
+                            `;
+                        }
+                        html += '</div></div>';
+                    }
+                    html += '</div>';
+                    container.innerHTML = html;
+                }
+            } catch (e) {
+                console.warn('Could not load profile reference:', e);
+            }
+        }
+
+        function openProductCatalogModal() {
+            document.getElementById('productCatalogModal').style.display = 'flex';
+        }
+        function closeProductCatalogModal() {
+            document.getElementById('productCatalogModal').style.display = 'none';
+        }
+
+        // ──────────────────────────────────────────────
+        // GLOBAL UTILITIES & FEEDBACK
+        // ──────────────────────────────────────────────
+        function showToast(msg) {
+            const toast = document.getElementById('appToast');
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3600);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+            });
+        }
+    </script>
 </body>
 </html>
