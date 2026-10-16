@@ -1,0 +1,93 @@
+{
+  "company_name": "SAPCON Instruments Pvt. Ltd.",
+  "established": 1983,
+  "headquarters": "131, Palshikar Colony, Indore, Madhya Pradesh, India (PIN 452007)",
+  "website": "https://www.sapconinstruments.com",
+  "contact_email": "web@sapcon.in",
+  "phone": "+91-731-4855999",
+  "sender_name": "Elvis Joseph",
+  "sender_designation": "Regional Manager – South India Sales",
+  "sender_phone": "8871428228 / 0731-4757576, 75",
+  "sender_website": "sapconinstruments.com",
+  "stats": {
+    "experience": "40+ years",
+    "global_exports": "90+ countries",
+    "installations": "90,000+",
+    "clients": "8,000+"
+  },
+  "leadership": {
+    "Rajendra R. Palshikar": "Founder • Director, Finance & Accounts",
+    "Ashwin R. Palshikar": "Director • Business Development",
+    "Dhananjay R. Palshikar": "Director • Research & Manufacturing"
+  },
+  "core_competencies": [
+    "Industrial Process Level Measurement (Point & Continuous)",
+    "Speed & Conveyor Motion Monitoring Systems",
+    "Open Channel Flow Measurement (MPROF)",
+    "Fuel Storage & Fleet Monitoring Solutions (Capvel-FUEL)",
+    "Custom R&D, In-house PCB/Embedded Design & MOQ of 1 Unit"
+  ],
+  "product_catalog": {
+    "level_switches": {
+      "RF Admittance": {
+        "principle": "Detects electrical admittance changes; immune to material coating/buildup",
+        "best_for": "Sticky materials, slurries, viscous liquids, fly ash, cement powder, coal hoppers",
+        "industry_fit": ["Cement", "Power", "Chemical", "Mining", "Steel"]
+      },
+      "Capacitance": {
+        "principle": "Detects dielectric constant changes between probe and tank wall",
+        "best_for": "Liquids, powders, bulk solids, oil, water tanks",
+        "industry_fit": ["Food Processing", "Chemical", "Plastics", "Agriculture"]
+      },
+      "Vibrating Fork": {
+        "principle": "Resonant frequency damping when touched by material; PESO certified (Elixir)",
+        "best_for": "Clean liquids, hygienic pharma/food, low-density powders, slurry",
+        "industry_fit": ["Pharma", "Food & Beverage", "Chemical", "Edible Oil"]
+      },
+      "Conductivity": {
+        "principle": "Conductive circuit completion through conductive liquid",
+        "best_for": "Water, effluent, conductive chemical solutions",
+        "industry_fit": ["Water Treatment", "STP/ETP", "Boilers"]
+      },
+      "Rotating Paddle": {
+        "principle": "Mechanical motor stalls when solid material blocks rotating paddle",
+        "best_for": "Grains, animal feed, plastic granules, dry powders, grain silos",
+        "industry_fit": ["Agriculture & Grain", "Plastics", "Flour Mills", "Packaging"]
+      },
+      "Vibrating Rod": {
+        "principle": "Single rod vibration damping without jamming",
+        "best_for": "Bulk solids, granular materials, pellets",
+        "industry_fit": ["Cement", "Plastics", "Chemical", "Agriculture"]
+      }
+    },
+    "continuous_level_transmitters": {
+      "Capacitive Transmitter": "Continuous 4-20mA output for liquids and solids in non-conductive/conductive vessels",
+      "Ultrasonic Level Transmitter": "Non-contact echo transit time measurement for water, wastewater, chemicals",
+      "Radar Level Transmitter": "High-frequency electromagnetic radar waves for severe dust, temperature, pressure",
+      "Float-based & Magnetostrictive": "High precision liquid level measurement in fuel and chemical storage"
+    },
+    "specialized_solutions": {
+      "Capvel-FUEL": {
+        "description": "App-configurable capacitance fuel level transmitter with built-in level-to-volume math, turbulence damping, IP68, Flameproof IIC",
+        "best_for": "Fleet operators, diesel generator (DG) sets, industrial fuel tanks, remote fuel tracking"
+      },
+      "MPROF": {
+        "description": "Open-channel water flow measurement system using weirs/flumes with 4-20mA output",
+        "best_for": "ETP/STP discharge channels, industrial water treatment, irrigation canals"
+      },
+      "Speed Monitoring": {
+        "description": "Zero-speed switches, conveyor belt slip & rotation monitors",
+        "best_for": "Conveyor systems, bucket elevators, rotating crushers, industrial machinery"
+      }
+    }
+  },
+  "industry_mapping": {
+    "Cement": ["RF Admittance (silos/clinker)", "Radar Level", "Vibrating Rod", "Conveyor Speed Monitor"],
+    "Chemical & Petrochemical": ["Flameproof Vibrating Fork (Elixir)", "RF Admittance", "Capacitance Transmitter", "Radar Level"],
+    "Food & Beverage / Pharma": ["Sanitary Vibrating Fork", "Capacitance Level Switch", "Hygienic Continuous Level"],
+    "Power & Steel": ["RF Admittance (coal bunkers/ash handling)", "Speed Monitoring (conveyors)", "Radar Level"],
+    "Water & Wastewater": ["MPROF Open Channel Flow", "Ultrasonic Level Transmitter", "Conductivity Switch"],
+    "Agriculture & Grain": ["Rotating Paddle Switch", "Vibrating Rod", "Capacitance Level Switch"],
+    "Logistics & Gensets": ["Capvel-FUEL Level Transmitter"]
+  }
+}

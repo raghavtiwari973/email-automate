@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SAPCON Instruments — Sales Workbench Mobile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* ══════════════════════════════════════════════════════════════
+           SAPCON MOBILE ENTERPRISE DESIGN SYSTEM & CSS VARIABLES
+        ══════════════════════════════════════════════════════════════ */
+        :root {
+            --primary-navy: #16345C;
+            --deep-navy: #0F2747;
+            --action-blue: #2563EB;
+            --action-blue-hover: #1D4ED8;
+            --blue-subtle: #EFF6FF;
+            --blue-border: #BFDBFE;
+
+            --bg-app: #F5F7FA;
+            --surface: #FFFFFF;
+            --surface-subtle: #F8FAFC;
+            --surface-hover: #F1F5F9;
+            --border-light: #E2E8F0;
+            --border-mid: #CBD5E1;
+
+            --text-dark: #172B4D;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+
+            --status-success: #16A34A;
+            --status-success-bg: #F0FDF4;
+            --status-success-border: #BBF7D0;
+            --status-warning: #D97706;
+            --status-warning-bg: #FFFBEB;
+            --status-warning-border: #FDE68A;
+            --status-error: #DC2626;
+            --status-error-bg: #FEF2F2;
+            --status-error-border: #FECACA;
+
+            --radius-xs: 6px;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --radius-pill: 9999px;
+
+            --bottom-nav-h: 64px;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+            --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+            --shadow-float: 0 8px 20px -4px rgba(15, 23, 42, 0.12);
+            --shadow-sheet: 0 -8px 30px rgba(15, 23, 42, 0.16);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0b192c; /* Root dark background for device framing */
+            color: var(--text-dark);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ── Mobile Viewport Container (Adaptive: Fullscreen on mobile, centered iPhone frame on desktop) ── */
+        .mobile-device-frame {
+            width: 100%;
+            height: 100%;
+            max-width: 440px;
+            max-height: 920px;
+            background: var(--bg-app);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        @media (min-width: 480px) {
+            .mobile-device-frame {
+                border-radius: 40px;
+                border: 8px solid #1e293b;
+            }
+        }
+
+        /* ── Dynamic Island / Status Bar Top Notch ── */
+        .mobile-status-bar {
+            height: calc(36px + var(--safe-top));
+            padding-top: var(--safe-top);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-left: 24px;
+            padding-right: 24px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            z-index: 50;
+            flex-shrink: 0;
+            background: transparent;
+        }
+        .status-dark-text { color: var(--text-dark); }
+        .status-light-text { color: #ffffff; }
+
+        /* Dynamic Island Indicator */
+        .dynamic-island {
+            width: 110px;
+            height: 24px;
+            background: #000000;
+            border-radius: 20px;
+            margin: 0 auto;
+        }
+
+        /* ── Screen Page Views Container ── */
+        .screens-viewport {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-app);
+        }
+
+        .screen-view {
+            position: absolute;
+            inset: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: none;
+            flex-direction: column;
+            background: var(--bg-app);
+            padding-bottom: calc(var(--bottom-nav-h) + 20px);
+        }
+        .screen-view.active {
+            display: flex;
+            animation: fadeInScreen 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Screens without bottom navigation (Auth, Splash, Onboarding) */
+        .screen-view.fullscreen-mode {
+            padding-bottom: 24px;
+            z-index: 20;
+        }
+
+        @keyframes fadeInScreen {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           GLOBAL MOBILE HEADER (For standard screens)
+        ══════════════════════════════════════════════════════════════ */
+        .mobile-screen-header {
+            padding: 12px 18px 14px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
+        .mobile-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn-header-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            border: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dark);
+            cursor: pointer;
+        }
+        .btn-header-icon:hover { background: var(--surface-hover); }
+        .header-title-text {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--primary-navy);
+            letter-spacing: -0.2px;
+        }
+        .header-subtitle-text {
+            font-size: 11.5px;
+            color: var(--text-secondary);
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           BOTTOM NAVIGATION BAR (5 PRIMARY ITEMS)
+        ══════════════════════════════════════════════════════════════ */
+        .mobile-bottom-nav {
+            height: var(--bottom-nav-h);
+            background: var(--surface);
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 8px calc(env(safe-area-inset-bottom, 0px));
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+            box-shadow: 0 -2px 10px rgba(15, 23, 42, 0.04);
+        }
+        .bottom-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 6px 0;
+            color: var(--text-muted);
+            text-decoration: none;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            position: relative;
+            transition: color 0.15s ease;
+        }
+        .bottom-nav-item.active {
+            color: var(--action-blue);
+        }
+        .bottom-nav-item svg {
+            width: 20px;
+            height: 20px;
+            stroke-width: 2.2;
+        }
+        .bottom-nav-label {
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .nav-badge-pill {
+            position: absolute;
+            top: 2px;
+            right: 18%;
+            background: var(--status-error);
+            color: #ffffff;
+            font-size: 9.5px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: var(--radius-pill);
+            min-width: 16px;
+            text-align: center;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           COMPONENTS: BUTTONS, CARDS, INPUTS & BADGES
+        ══════════════════════════════════════════════════════════════ */
+        .btn-mobile-primary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            height: 48px;
+            background: var(--action-blue);
+            color: #ffffff;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+            text-decoration: none;
+        }
+        .btn-mobile-primary:hover { background: var(--action-blue-hover); }
+        .btn-mobile-primary.green {
+            background: var(--status-success);
+            box-shadow: 0 2px 6px rgba(22, 163, 74, 0.2);
+        }
+        .btn-mobile-primary:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .btn-mobile-secondary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            height: 48px;
+            background: var(--surface);
+            color: var(--text-dark);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-mobile-secondary:hover { background: var(--surface-hover); }
+
+        .form-group-mobile {
+            margin-bottom: 16px;
+        }
+        .form-label-mobile {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+        .form-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .form-input-icon {
+            position: absolute;
+            left: 14px;
+            color: var(--text-muted);
+            width: 18px;
+            height: 18px;
+            pointer-events: none;
+        }
+        .form-control-mobile {
+            width: 100%;
+            height: 48px;
+            padding: 0 14px 0 42px;
+            background: var(--surface);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            color: var(--text-dark);
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .form-control-mobile.no-icon { padding-left: 14px; }
+        .form-control-mobile:focus {
+            border-color: var(--action-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        textarea.form-control-mobile {
+            height: auto;
+            min-height: 110px;
+            padding: 12px 14px;
+            line-height: 1.5;
+        }
+
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: var(--radius-pill);
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .pill-badge.pending { background: var(--status-warning-bg); color: var(--status-warning); border: 1px solid var(--status-warning-border); }
+        .pill-badge.approved { background: var(--status-success-bg); color: var(--status-success); border: 1px solid var(--status-success-border); }
+        .pill-badge.sent { background: #eff6ff; color: var(--action-blue); border: 1px solid var(--blue-border); }
+
+        /* Segmented Filter Pills */
+        .filter-chip-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 12px 18px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border-light);
+            flex-shrink: 0;
+        }
+        .filter-chip {
+            padding: 6px 14px;
+            border-radius: var(--radius-pill);
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-light);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .filter-chip.active {
+            background: var(--action-blue);
+            color: #ffffff;
+            border-color: var(--action-blue);
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           NAVIGATION DRAWER ("MORE" MENU)
+        ══════════════════════════════════════════════════════════════ */
+        .drawer-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        .drawer-overlay.open {
+            display: block;
+            opacity: 1;
+        }
+        .drawer-panel {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            width: 82%;
+            max-width: 320px;
+            background: #0D223E; /* Dark Navy Drawer */
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 20px;
+            transform: translateX(100%);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow-y: auto;
+        }
+        .drawer-overlay.open .drawer-panel {
+            transform: translateX(0);
+        }
+        .drawer-user-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        .user-avatar-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #1e3a5f;
+            border: 2px solid #3b82f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+            color: #ffffff;
+        }
+        .drawer-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #64748b;
+            margin: 16px 0 8px;
+        }
+        .drawer-nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            color: #cbd5e1;
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 4px;
+            transition: background 0.15s;
+        }
+        .drawer-nav-item:hover, .drawer-nav-item.active {
+            background: rgba(37, 99, 235, 0.2);
+            color: #ffffff;
+        }
+        .drawer-nav-item svg { width: 18px; height: 18px; stroke-width: 2; }
+
+        /* Toast Feedback */
+        .mobile-toast {
+            position: absolute;
+            bottom: calc(var(--bottom-nav-h) + 16px);
+            left: 20px;
+            right: 20px;
+            background: var(--primary-navy);
+            color: #ffffff;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: var(--shadow-float);
+            display: none;
+            z-index: 200;
+            animation: slideUpToast 0.2s ease;
+        }
+        @keyframes slideUpToast {
+            from { transform: translateY(12px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         MOBILE DEVICE VIEWPORT WRAPPER
+    ══════════════════════════════════════════════════════════════ -->
+    <div class="mobile-device-frame">
+
+        <!-- Top Phone Status Bar / Dynamic Island Area -->
+        <div class="mobile-status-bar" id="mobileStatusBar">
+            <span id="statusBarClock">9:41</span>
+            <div class="dynamic-island"></div>
+            <div style="display:flex; align-items:center; gap:6px;">
+                <svg width="15" height="12" viewBox="0 0 15 12" fill="currentColor"><path d="M1 9h2V3H1v6zm4 2h2V1H5v10zm4-4h2V5H9v4zm4-7v11h2V0h-2z"/></svg>
+                <svg width="15" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M14 2H2C.9 2 0 2.9 0 4v6c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 8H3V4h10v6z"/></svg>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════
+             SCREENS VIEWPORT CONTAINER
+        ══════════════════════════════════════════════════════════════ -->
+        <div class="screens-viewport">
+
+            <!-- ── SCREEN 1: SPLASH SCREEN ── -->
+            <div id="screenSplash" class="screen-view fullscreen-mode active" style="background:#0F2747; color:#ffffff; align-items:center; justify-content:center; text-align:center; padding:32px;">
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    <div style="width:72px; height:72px; background:#ffffff; border-radius:18px; padding:10px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(0,0,0,0.25); margin-bottom:20px;">
+                        <img src="/images/image1.png" alt="SAPCON" style="width:100%; height:100%; object-fit:contain;">
+                    </div>
+                    <h1 style="font-size:24px; font-weight:800; letter-spacing:-0.4px;">SAPCON Instruments</h1>
+                    <div style="font-size:12px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-top:6px;">
+                        Measure | Monitor | Control
+                    </div>
+                </div>
+
+                <div style="padding-bottom:30px; width:100%; text-align:center;">
+                    <div style="font-size:12px; color:#94a3b8; margin-bottom:16px;">Trusted Level, Flow &amp; Speed Measurement Solutions Since 1983</div>
+                    <div style="width:36px; height:3px; background:#2563eb; border-radius:2px; margin:0 auto;"></div>
+                </div>
+            </div>
+
+            <!-- ── SCREEN 2: ONBOARDING ── -->
+            <div id="screenOnboarding" class="screen-view fullscreen-mode" style="background:#ffffff; padding:24px 20px; justify-content:space-between;">
+                <div style="display:flex; justify-content:center; padding-top:20px;">
+                    <img src="/images/image1.png" alt="SAPCON" style="height:36px;">
+                </div>
+
+                <!-- Industrial Illustration Graphic -->
+                <div style="text-align:center; padding:20px 0;">
+                    <img src="/images/image2.png" alt="Industry" style="width:100%; max-height:220px; object-fit:cover; border-radius:16px; border:1px solid #e2e8f0;">
+                    <h2 style="font-size:22px; font-weight:800; color:var(--primary-navy); margin-top:24px; line-height:1.25;">
+                        Smart Sales Communication for a Connected Industry
+                    </h2>
+                    <p style="font-size:13.5px; color:var(--text-secondary); margin-top:10px; line-height:1.5;">
+                        Manage customer leads, generate AI-assisted proposals, and respond to technical inquiries with verified instrumentation accuracy.
+                    </p>
+                </div>
+
+                <div>
+                    <!-- Step Indicator -->
+                    <div style="display:flex; justify-content:center; gap:6px; margin-bottom:20px;">
+                        <span style="width:20px; height:6px; background:#2563eb; border-radius:3px;"></span>
+                        <span style="width:6px; height:6px; background:#cbd5e1; border-radius:3px;"></span>
+                        <span style="width:6px; height:6px; background:#cbd5e1; border-radius:3px;"></span>
+                    </div>
+
+                    <button class="btn-mobile-primary" onclick="showScreen('screenLogin')">
+                        Get Started
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ── SCREEN 3: LOGIN ── -->
+            <div id="screenLogin" class="screen-view fullscreen-mode" style="background:#ffffff; padding:24px 20px;">
+                <div style="text-align:center; margin-bottom:28px; padding-top:10px;">
+                    <img src="/images/image1.png" alt="SAPCON" style="height:40px; margin-bottom:8px;">
+                    <div style="font-size:11.5px; font-weight:700; color:var(--primary-navy); text-transform:uppercase; letter-spacing:0.8px;">Sales Workbench</div>
+                </div>
+
+                <h2 style="font-size:24px; font-weight:800; color:var(--text-dark); margin-bottom:6px;">Welcome Back</h2>
+                <p style="font-size:13.5px; color:var(--text-secondary); margin-bottom:24px;">Sign in to your account to continue.</p>
+
+                <form onsubmit="handleMobileLogin(event)">
+                    <div class="form-group-mobile">
+                        <label class="form-label-mobile">Email Address</label>
+                        <div class="form-input-wrap">
+                            <svg class="form-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+                            <input type="email" class="form-control-mobile" id="loginEmail" placeholder="e.g. sales@sapcon.in" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group-mobile">
+                        <label class="form-label-mobile">Password</label>
+                        <div class="form-input-wrap">
+                            <svg class="form-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            <input type="password" class="form-control-mobile" id="loginPassword" placeholder="Enter password" required>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; font-size:12.5px;">
+                        <label style="display:flex; align-items:center; gap:6px; color:var(--text-secondary); cursor:pointer;">
+                            <input type="checkbox" checked style="accent-color:var(--action-blue);"> Remember me
+                        </label>
+                        <a href="javascript:void(0)" onclick="showScreen('screenForgot')" style="color:var(--action-blue); font-weight:600; text-decoration:none;">Forgot Password?</a>
+                    </div>
+
+                    <button type="submit" class="btn-mobile-primary" id="btnLoginSubmit" style="margin-bottom:16px;">
+                        Sign In
+                    </button>
+                </form>
+
+                <div style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:16px;">OR</div>
+
+                <!-- Google OAuth Sign In -->
+                <a href="/auth/login" class="btn-mobile-secondary" style="gap:10px; margin-bottom:24px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    Continue with Google
+                </a>
+
+                <div style="text-align:center; font-size:13px; color:var(--text-secondary); margin-top:auto;">
+                    Don't have an account? <a href="javascript:void(0)" onclick="showScreen('screenSignup')" style="color:var(--action-blue); font-weight:700; text-decoration:none;">Sign Up</a>
+                </div>
+            </div>
+
+            <!-- ── SCREEN 4: SIGN UP ── -->
+            <div id="screenSignup" class="screen-view fullscreen-mode" style="background:#ffffff; padding:20px;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+                    <button class="btn-header-icon" onclick="showScreen('screenLogin')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <div>
+                        <h3 style="font-size:18px; font-weight:700; color:var(--primary-navy);">Create Your Account</h3>
+                        <div style="font-size:12px; color:var(--text-secondary);">Join SAPCON Sales Workbench</div>
+                    </div>
+                </div>
+
+                <form onsubmit="handleMobileSignup(event)">
+                    <div class="form-group-mobile">
+                        <label class="form-label-mobile">Full Name</label>
+                        <input type="text" class="form-control-mobile no-icon" id="signupName" placeholder="Enter your full name" required>
+                    </div>
+
+                    <div class="form-group-mobile">
+                        <label class="form-label-mobile">Email Address</label>
+                        <input type="email" class="form-control-mobile no-icon" id="signupEmail" placeholder="Enter business email" required>
+                    </div>
+
+                    <div class="form-group-mobile">
+                        <label class="form-label-mobile">Password</label>
+                        <input type="password" class="form-control-mobile no-icon" id="signupPassword" placeholder="Create a strong password" required>
+                    </div>
+
+                    <div class="form-group-mobile">
+                        <label class="form-label-mobile">Confirm Password</label>
+                        <input type="password" class="form-control-mobile no-icon" id="signupConfirm" placeholder="Confirm your password" required>
+                    </div>
+
+                    <label style="display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--text-secondary); margin-bottom:20px; cursor:pointer;">
+                        <input type="checkbox" required style="margin-top:2px;">
+                        <span>I agree to the <a href="javascript:void(0)" style="color:var(--action-blue);">Terms &amp; Conditions</a> and <a href="javascript:void(0)" style="color:var(--action-blue);">Privacy Policy</a></span>
+                    </label>
+
+                    <button type="submit" class="btn-mobile-primary" style="margin-bottom:16px;">
+                        Create Account
+                    </button>
+                </form>
+
+                <div style="text-align:center; font-size:13px; color:var(--text-secondary);">
+                    Already have an account? <a href="javascript:void(0)" onclick="showScreen('screenLogin')" style="color:var(--action-blue); font-weight:700; text-decoration:none;">Sign In</a>
+                </div>
+            </div>
+
+            <!-- ── SCREEN 5: FORGOT PASSWORD ── -->
+            <div id="screenForgot" class="screen-view fullscreen-mode" style="background:#ffffff; padding:20px;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
+                    <button class="btn-header-icon" onclick="showScreen('screenLogin')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <h3 style="font-size:18px; font-weight:700; color:var(--primary-navy);">Password Recovery</h3>
+                </div>
+
+                <div style="margin-bottom:24px;">
+                    <h2 style="font-size:22px; font-weight:800; color:var(--text-dark); margin-bottom:6px;">Forgot Your Password?</h2>
+                    <p style="font-size:13.5px; color:var(--text-secondary);">Enter your registered email address to receive recovery instructions.</p>
+                </div>
+
+                <form onsubmit="handleForgotPassword(event)">
+                    <div class="form-group-mobile">
+                        <label class="form-label-mobile">Email Address</label>
+                        <input type="email" class="form-control-mobile no-icon" placeholder="name@company.com" required>
+                    </div>
+
+                    <button type="submit" class="btn-mobile-primary" style="margin-bottom:14px;">
+                        Send Reset Link
+                    </button>
+
+                    <button type="button" class="btn-mobile-secondary" onclick="showScreen('screenLogin')">
+                        Back to Sign In
+                    </button>
+                </form>
+            </div>
+
+            <!-- ── SCREEN 6: HOME DASHBOARD ── -->
+            <div id="screenHome" class="screen-view">
+                <div class="mobile-screen-header">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button class="btn-header-icon" onclick="openDrawer()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                        </button>
+                        <img src="/images/image1.png" alt="SAPCON" style="height:26px;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div class="user-avatar-circle" id="homeAvatar" style="width:34px; height:34px; font-size:13px;" onclick="openDrawer()">RT</div>
+                    </div>
+                </div>
+
+                <div style="padding:16px 18px;">
+                    <!-- User Greeting -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:12.5px; font-weight:500; color:var(--text-secondary);" id="greetingTimeTxt">Good Morning,</div>
+                        <h2 style="font-size:22px; font-weight:800; color:var(--primary-navy);" id="homeUserName">Raghav Tiwari</h2>
+                        <p style="font-size:12.5px; color:var(--text-secondary); margin-top:2px;">Manage your sales communication with AI-powered assistance.</p>
+                    </div>
+
+                    <!-- Industrial Solutions Banner -->
+                    <div style="position:relative; border-radius:16px; overflow:hidden; margin-bottom:20px; box-shadow:var(--shadow-card);">
+                        <img src="/images/image2.png" alt="Industrial Plants" style="width:100%; height:130px; object-fit:cover; display:block;">
+                        <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(15,39,71,0.2) 0%, rgba(15,39,71,0.85) 100%); display:flex; flex-direction:column; justify-content:flex-end; padding:12px 14px; color:#ffffff;">
+                            <div style="font-size:12.5px; font-weight:700;">Trusted Level, Flow &amp; Speed Measurement</div>
+                            <div style="font-size:11px; color:#cbd5e1;">Global process installations across 90+ countries &rarr;</div>
+                        </div>
+                    </div>
+
+                    <!-- 4-Card Module Grid -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+                        <div style="background:#ffffff; border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:16px 14px; cursor:pointer;" onclick="showScreen('screenOutbox')">
+                            <div style="width:36px; height:36px; border-radius:10px; background:#eff6ff; display:flex; align-items:center; justify-content:center; color:#2563eb; margin-bottom:10px;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+                            </div>
+                            <div style="font-size:14px; font-weight:700; color:var(--text-dark);">Outbox Drafts</div>
+                            <div style="font-size:11.5px; color:var(--status-warning); font-weight:600; margin-top:4px;" id="homePendingCount">0 Pending</div>
+                        </div>
+
+                        <div style="background:#ffffff; border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:16px 14px; cursor:pointer;" onclick="showScreen('screenLeads')">
+                            <div style="width:36px; height:36px; border-radius:10px; background:#f0fdf4; display:flex; align-items:center; justify-content:center; color:#16a34a; margin-bottom:10px;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+                            </div>
+                            <div style="font-size:14px; font-weight:700; color:var(--text-dark);">New Leads</div>
+                            <div style="font-size:11.5px; color:var(--text-secondary); margin-top:4px;">Import &amp; Create</div>
+                        </div>
+
+                        <div style="background:#ffffff; border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:16px 14px; cursor:pointer;" onclick="showScreen('screenInquiries')">
+                            <div style="width:36px; height:36px; border-radius:10px; background:#faf5ff; display:flex; align-items:center; justify-content:center; color:#9333ea; margin-bottom:10px;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            </div>
+                            <div style="font-size:14px; font-weight:700; color:var(--text-dark);">Client Inquiries</div>
+                            <div style="font-size:11.5px; color:#9333ea; font-weight:600; margin-top:4px;" id="homeInboxCount">0 Messages</div>
+                        </div>
+
+                        <div style="background:#ffffff; border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:16px 14px; cursor:pointer;" onclick="openCatalogSheet()">
+                            <div style="width:36px; height:36px; border-radius:10px; background:#fffbeb; display:flex; align-items:center; justify-content:center; color:#d97706; margin-bottom:10px;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                            </div>
+                            <div style="font-size:14px; font-weight:700; color:var(--text-dark);">Products Catalog</div>
+                            <div style="font-size:11.5px; color:var(--text-secondary); margin-top:4px;">Instrumentation Specs</div>
+                        </div>
+                    </div>
+
+                    <!-- Verified Summary Cards -->
+                    <div style="background:#ffffff; border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:16px; box-shadow:var(--shadow-card);">
+                        <div style="font-size:13.5px; font-weight:700; color:var(--primary-navy); margin-bottom:12px;">Live Dispatch Performance</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; text-align:center;">
+                            <div style="background:var(--surface-subtle); padding:10px 6px; border-radius:var(--radius-md);">
+                                <div style="font-size:18px; font-weight:800; color:var(--status-warning);" id="metricPendingMobile">0</div>
+                                <div style="font-size:10.5px; color:var(--text-secondary); font-weight:600;">Pending</div>
+                            </div>
+                            <div style="background:var(--surface-subtle); padding:10px 6px; border-radius:var(--radius-md);">
+                                <div style="font-size:18px; font-weight:800; color:var(--status-success);" id="metricApprovedMobile">0</div>
+                                <div style="font-size:10.5px; color:var(--text-secondary); font-weight:600;">Approved</div>
+                            </div>
+                            <div style="background:var(--surface-subtle); padding:10px 6px; border-radius:var(--radius-md);">
+                                <div style="font-size:18px; font-weight:800; color:var(--action-blue);" id="metricSentMobile">0</div>
+                                <div style="font-size:10.5px; color:var(--text-secondary); font-weight:600;">Sent</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── SCREEN 7: OUTBOX DRAFTS ── -->
+            <div id="screenOutbox" class="screen-view">
+                <div class="mobile-screen-header">
+                    <div class="mobile-header-left">
+                        <button class="btn-header-icon" onclick="showScreen('screenHome')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        <span class="header-title-text">Outbox Drafts</span>
+                    </div>
+                    <button class="btn-header-icon" onclick="fetchQueueData()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+                    </button>
+                </div>
+
+                <!-- Filter Chips -->
+                <div class="filter-chip-row">
+                    <div class="filter-chip active" id="chipOutboxAll" onclick="filterDrafts('all')">All (<span id="countDraftAll">0</span>)</div>
+                    <div class="filter-chip" id="chipOutboxPending" onclick="filterDrafts('pending')">Pending Review</div>
+                    <div class="filter-chip" id="chipOutboxApproved" onclick="filterDrafts('approved')">Approved</div>
+                    <div class="filter-chip" id="chipOutboxSent" onclick="filterDrafts('sent')">Sent Out</div>
+                </div>
+
+                <!-- Search Input -->
+                <div style="padding:10px 18px 0; background:var(--surface);">
+                    <div class="form-input-wrap">
+                        <svg class="form-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" class="form-control-mobile" id="searchDraftsInput" placeholder="Search company or subject..." oninput="handleSearchDrafts(this.value)">
+                    </div>
+                </div>
+
+                <!-- Drafts List Container -->
+                <div id="mobileDraftsList" style="padding:14px 18px; display:flex; flex-direction:column; gap:12px;">
+                    <!-- Dynamically populated -->
+                </div>
+
+                <!-- Empty State -->
+                <div id="outboxEmptyView" style="display:none; text-align:center; padding:60px 24px;">
+                    <div style="width:48px; height:48px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; margin:0 auto 14px; color:#64748b;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    </div>
+                    <h3 style="font-size:16px; font-weight:700; color:var(--primary-navy);">You're all caught up</h3>
+                    <p style="font-size:13px; color:var(--text-secondary); margin:6px 0 18px;">Newly generated sales emails will appear here for review.</p>
+                    <button class="btn-mobile-primary" style="max-width:200px; margin:0 auto;" onclick="showScreen('screenLeads')">Add Leads</button>
+                </div>
+            </div>
+
+            <!-- ── SCREEN 8: DRAFT DETAIL ── -->
+            <div id="screenDraftDetail" class="screen-view">
+                <div class="mobile-screen-header">
+                    <div class="mobile-header-left">
+                        <button class="btn-header-icon" onclick="showScreen('screenOutbox')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        <span class="header-title-text">Draft Detail</span>
+                    </div>
+                </div>
+
+                <div style="padding:16px 18px;">
+                    <div style="background:#ffffff; border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:18px; margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                            <div>
+                                <h3 style="font-size:16px; font-weight:800; color:var(--primary-navy);" id="detailDraftCompany">Company Name</h3>
+                                <div style="font-size:12.5px; color:var(--text-secondary); margin-top:2px;" id="detailDraftEmail">client@company.com</div>
+                            </div>
+                            <span class="pill-badge pending" id="detailDraftBadge">Pending Review</span>
+                        </div>
+
+                        <div class="form-group-mobile">
+                            <label class="form-label-mobile">Subject Line</label>
+                            <input type="text" class="form-control-mobile no-icon" id="detailDraftSubject">
+                        </div>
+
+                        <div class="form-group-mobile">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <label class="form-label-mobile" style="margin-bottom:0;">Email Proposal Content</label>
+                                <div style="display:flex; background:#f1f5f9; padding:2px; border-radius:8px; border:1px solid var(--border-light); gap:2px;">
+                                    <button type="button" id="btnDraftModePreview" onclick="setDraftBodyMode('preview')" style="border:none; background:#ffffff; color:var(--action-blue); font-size:11px; font-weight:700; padding:4px 10px; border-radius:6px; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.05);">Preview</button>
+                                    <button type="button" id="btnDraftModeEdit" onclick="setDraftBodyMode('edit')" style="border:none; background:transparent; color:var(--text-secondary); font-size:11px; font-weight:600; padding:4px 10px; border-radius:6px; cursor:pointer;">Edit Text</button>
+                                </div>
+                            </div>
+                            <!-- Clean Rendered Preview Box -->
+                            <div id="detailDraftPreviewBox" style="min-height:220px; max-height:360px; overflow-y:auto; background:#ffffff; border:1px solid var(--border-light); border-radius:var(--radius-md); padding:14px; font-size:13.5px; line-height:1.6; color:var(--text-dark);"></div>
+                            <!-- Raw/Text Editor Textarea -->
+                            <textarea class="form-control-mobile no-icon" id="detailDraftBody" rows="11" style="display:none; font-family:'Inter', sans-serif; font-size:13px; line-height:1.5;"></textarea>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <button class="btn-mobile-primary green" onclick="approveCurrentMobileDraft()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Approve &amp; Send Now
+                        </button>
+                        <button class="btn-mobile-secondary" onclick="saveCurrentMobileDraft()">
+                            Save Changes to Cache
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── SCREEN 9: NEW LEADS & FILE INGESTION ── -->
+            <div id="screenLeads" class="screen-view">
+                <div class="mobile-screen-header">
+                    <div class="mobile-header-left">
+                        <button class="btn-header-icon" onclick="showScreen('screenHome')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        <span class="header-title-text">New Leads Ingestion</span>
+                    </div>
+                </div>
+
+                <!-- Tab Segment: Upload File vs Add Single Lead -->
+                <div style="display:flex; padding:12px 18px; background:var(--surface); border-bottom:1px solid var(--border-light); gap:8px;">
+                    <button class="btn-mobile-primary" id="btnTabUpload" style="height:38px; font-size:13px; flex:1;" onclick="toggleLeadsMode('upload')">
+                        📁 Upload File
+                    </button>
+                    <button class="btn-mobile-secondary" id="btnTabSingle" style="height:38px; font-size:13px; flex:1;" onclick="toggleLeadsMode('single')">
+                        ✏️ Add Single Lead
+                    </button>
+                </div>
+
+                <!-- View 9A: File Upload Panel -->
+                <div id="panelUploadFile" style="padding:18px;">
+                    <div style="background:#ffffff; border:2px dashed var(--border-mid); border-radius:var(--radius-lg); padding:36px 20px; text-align:center; cursor:pointer;" onclick="document.getElementById('mobileFileInput').click()">
+                        <input type="file" id="mobileFileInput" accept=".xlsx,.csv" style="display:none;" onchange="handleMobileFileSelected(event)">
+                        <div style="width:48px; height:48px; border-radius:14px; background:#eff6ff; color:#2563eb; display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        </div>
+                        <h4 style="font-size:15px; font-weight:700; color:var(--primary-navy);" id="mobileDropzoneHeader">Upload Leads File</h4>
+                        <p style="font-size:12px; color:var(--text-secondary); margin:6px 0 16px;">Select an Excel (.xlsx) or CSV (.csv) up to 25MB.</p>
+                        <button type="button" class="btn-mobile-primary" style="height:38px; font-size:13px; max-width:160px; margin:0 auto;">Browse Files</button>
+                    </div>
+
+                    <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:var(--radius-md); padding:14px; margin-top:16px;">
+                        <label style="display:flex; align-items:flex-start; gap:8px; font-size:12.5px; color:#92400e; font-weight:600; cursor:pointer;">
+                            <input type="checkbox" id="chkMobileDirectSendFile" style="margin-top:2px;">
+                            <span>Direct Send Mode: Skip review stage &amp; dispatch directly via Google</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- View 9B: Add Single Lead Form (Screen 10) -->
+                <div id="panelSingleLead" style="display:none; padding:18px;">
+                    <form onsubmit="submitMobileSingleLead(event)">
+                        <div class="form-group-mobile">
+                            <label class="form-label-mobile">Company Name *</label>
+                            <input type="text" class="form-control-mobile no-icon" id="mobileSingleCompany" placeholder="e.g. UltraTech Cement, Reliance" required>
+                        </div>
+
+                        <div class="form-group-mobile">
+                            <label class="form-label-mobile">Target Email Address *</label>
+                            <input type="email" class="form-control-mobile no-icon" id="mobileSingleEmail" placeholder="e.g. procurement@company.com" required>
+                        </div>
+
+                        <div class="form-group-mobile">
+                            <label class="form-label-mobile">Customer Requirement / Application Demand *</label>
+                            <textarea class="form-control-mobile no-icon" id="mobileSingleDemand" placeholder="Describe plant process conditions (e.g. High-temperature clinker silo level measurement or fuel storage monitoring)..." required></textarea>
+                        </div>
+
+                        <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-secondary); margin-bottom:20px; cursor:pointer;">
+                            <input type="checkbox" id="chkMobileDirectSendSingle">
+                            Direct Send Immediately (Skip Queue Review)
+                        </label>
+
+                        <button type="submit" class="btn-mobile-primary" id="btnSubmitSingleMobile">
+                            Draft &amp; Queue for Review
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ── SCREEN 11: PROCESSING LEADS & PROGRESS ── -->
+            <div id="screenProcessing" class="screen-view fullscreen-mode" style="background:#ffffff; align-items:center; justify-content:center; text-align:center; padding:32px;">
+                <div style="width:72px; height:72px; border:4px solid #e2e8f0; border-top-color:#2563eb; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:24px;"></div>
+                <h2 style="font-size:20px; font-weight:800; color:var(--primary-navy);" id="procStatusTitle">Processing Leads with AI…</h2>
+                <p style="font-size:13px; color:var(--text-secondary); margin:6px 0 20px;" id="procStatusSub">Mapping plant process conditions to SAPCON instrumentation</p>
+
+                <div style="width:100%; max-width:280px; background:#f1f5f9; height:8px; border-radius:4px; overflow:hidden; margin-bottom:12px;">
+                    <div id="procProgressFill" style="width:40%; height:100%; background:#2563eb; transition:width 0.3s;"></div>
+                </div>
+                <div style="font-size:12px; font-weight:600; color:#2563eb;" id="procProgressTxt">Analyzing application requirements…</div>
+            </div>
+
+            <!-- ── SCREEN 12: PROCESSING RESULTS ── -->
+            <div id="screenResults" class="screen-view fullscreen-mode" style="background:#ffffff; padding:32px 24px; justify-content:space-between;">
+                <div>
+                    <div style="width:56px; height:56px; border-radius:50%; background:#f0fdf4; color:#16a34a; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <h2 style="font-size:22px; font-weight:800; color:var(--primary-navy); text-align:center;">Processing Completed!</h2>
+                    <p style="font-size:13px; color:var(--text-secondary); text-align:center; margin-top:4px;">Your customer lead file has been processed.</p>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:28px 0;">
+                        <div style="background:var(--surface-subtle); padding:14px; border-radius:12px; text-align:center;">
+                            <div style="font-size:22px; font-weight:800; color:var(--primary-navy);" id="resTotal">0</div>
+                            <div style="font-size:11.5px; color:var(--text-secondary); font-weight:600;">Total Detected</div>
+                        </div>
+                        <div style="background:var(--surface-subtle); padding:14px; border-radius:12px; text-align:center;">
+                            <div style="font-size:22px; font-weight:800; color:var(--status-success);" id="resValid">0</div>
+                            <div style="font-size:11.5px; color:var(--text-secondary); font-weight:600;">Valid Leads</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <button class="btn-mobile-primary" onclick="showScreen('screenOutbox')">
+                        View Outbox Drafts
+                    </button>
+                    <button class="btn-mobile-secondary" onclick="showScreen('screenHome')">
+                        Back to Home
+                    </button>
+                </div>
+            </div>
+
+            <!-- ── SCREEN 13: CLIENT INQUIRIES ── -->
+            <div id="screenInquiries" class="screen-view">
+                <div class="mobile-screen-header">
+                    <div class="mobile-header-left">
+                        <button class="btn-header-icon" onclick="showScreen('screenHome')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        <span class="header-title-text">Client Inquiries</span>
+                    </div>
+                    <button class="btn-header-icon" onclick="loadMobileInbox()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+                    </button>
+                </div>
+
+                <div class="filter-chip-row">
+                    <div class="filter-chip active">All Messages (<span id="inboxCountAll">0</span>)</div>
+                </div>
+
+                <div id="mobileInboxList" style="padding:14px 18px; display:flex; flex-direction:column; gap:10px;">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <!-- ── SCREEN 14: EMAIL DETAIL (FULL BODY PREVIEW) ── -->
+            <div id="screenEmailDetail" class="screen-view">
+                <div class="mobile-screen-header">
+                    <div class="mobile-header-left">
+                        <button class="btn-header-icon" onclick="showScreen('screenInquiries')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        <span class="header-title-text">Email Detail</span>
+                    </div>
+                </div>
+
+                <div style="padding:16px 18px;">
+                    <div style="background:#ffffff; border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:16px; margin-bottom:16px;">
+                        <h3 style="font-size:16px; font-weight:800; color:var(--primary-navy);" id="emailViewSubject">Subject Line</h3>
+                        <div style="font-size:12px; color:var(--text-secondary); margin:4px 0 12px;" id="emailViewDate">Date</div>
+
+                        <div style="background:var(--surface-subtle); padding:10px; border-radius:var(--radius-md); font-size:12.5px; margin-bottom:14px;">
+                            <div><strong>From:</strong> <span id="emailViewFrom">client@company.com</span></div>
+                            <div style="color:var(--text-muted); font-size:11.5px; margin-top:2px;" id="emailViewEmail">client@company.com</div>
+                        </div>
+
+                        <!-- Full Body Message View with Text & HTML toggles -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:11.5px; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Full Customer Message</span>
+                            <div style="display:flex; gap:6px;">
+                                <button type="button" class="pill-badge" id="btnToggleText" style="cursor:pointer; background:#2563eb; color:#fff;" onclick="toggleEmailPreviewMode('text')">Text</button>
+                                <button type="button" class="pill-badge" id="btnToggleHtml" style="cursor:pointer; background:#f1f5f9; color:#475569;" onclick="toggleEmailPreviewMode('html')">HTML</button>
+                            </div>
+                        </div>
+
+                        <div id="emailViewBodyText" style="padding:12px; border:1px solid var(--border-light); border-radius:var(--radius-md); background:#ffffff; font-size:13px; line-height:1.6; white-space:pre-wrap; max-height:360px; overflow-y:auto; word-break:break-word;">
+                            Message content...
+                        </div>
+                        <iframe id="emailViewBodyFrame" style="width:100%; height:320px; border:1px solid var(--border-light); border-radius:var(--radius-md); display:none;"></iframe>
+                    </div>
+
+                    <button class="btn-mobile-primary" onclick="prepareAIReply()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        AI Draft Reply
+                    </button>
+                </div>
+            </div>
+
+            <!-- ── SCREEN 15: AI DRAFT REPLY ── -->
+            <div id="screenDraftReply" class="screen-view">
+                <div class="mobile-screen-header">
+                    <div class="mobile-header-left">
+                        <button class="btn-header-icon" onclick="showScreen('screenEmailDetail')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        <span class="header-title-text">AI Draft Reply</span>
+                    </div>
+                </div>
+
+                <div style="padding:16px 18px;">
+                    <div style="background:#eff6ff; border:1px solid var(--blue-border); border-radius:var(--radius-md); padding:12px; font-size:12px; color:#1e40af; margin-bottom:14px;" id="replyAnalysisBox">
+                        Consultative recommendations formulated from SAPCON process instrumentation specifications.
+                    </div>
+
+                    <div class="form-group-mobile">
+                        <label class="form-label-mobile">Reply Subject</label>
+                        <input type="text" class="form-control-mobile no-icon" id="replySubjectInput">
+                    </div>
+
+                    <div class="form-group-mobile">
+                        <label class="form-label-mobile">Technical Response Body</label>
+                        <textarea class="form-control-mobile no-icon" id="replyBodyInput" rows="12"></textarea>
+                    </div>
+
+                    <button class="btn-mobile-primary" onclick="submitMobileReply()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        Send Technical Reply
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════
+             SCREEN 16: PROFILE AND NAVIGATION DRAWER
+        ══════════════════════════════════════════════════════════════ -->
+        <div class="drawer-overlay" id="appDrawerOverlay" onclick="closeDrawer(event)">
+            <div class="drawer-panel" onclick="event.stopPropagation()">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <img src="/images/image1.png" alt="SAPCON" style="height:26px; filter:brightness(0) invert(1);">
+                        <span style="font-weight:700; font-size:14px;">Sales Workbench</span>
+                    </div>
+                    <button style="background:transparent; border:none; color:#cbd5e1; cursor:pointer;" onclick="closeDrawer()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+
+                <div class="drawer-user-card">
+                    <div class="user-avatar-circle" id="drawerAvatar">RT</div>
+                    <div>
+                        <div style="font-weight:700; font-size:14.5px;" id="drawerUserName">Raghav Tiwari</div>
+                        <div style="font-size:11.5px; color:#94a3b8;" id="drawerUserEmail">sales@sapcon.in</div>
+                    </div>
+                </div>
+
+                <div class="drawer-section-title">Workspace</div>
+                <div class="drawer-nav-item active" onclick="showScreen('screenHome'); closeDrawer();">
+                    <span>🏠 Home Dashboard</span>
+                </div>
+                <div class="drawer-nav-item" onclick="showScreen('screenOutbox'); closeDrawer();">
+                    <span>📋 Outbox Drafts</span>
+                </div>
+                <div class="drawer-nav-item" onclick="showScreen('screenLeads'); closeDrawer();">
+                    <span>➕ New Leads &amp; File Ingestion</span>
+                </div>
+                <div class="drawer-nav-item" onclick="showScreen('screenInquiries'); closeDrawer();">
+                    <span>📥 Client Inquiries</span>
+                </div>
+
+                <div class="drawer-section-title">Management</div>
+                <div class="drawer-nav-item" onclick="openCatalogSheet(); closeDrawer();">
+                    <span>📦 Products &amp; Solutions</span>
+                </div>
+
+                <div class="drawer-section-title" style="margin-top:auto;">Account</div>
+                <div class="drawer-nav-item" style="color:#ef4444;" onclick="handleAppSignout()">
+                    <span>🚪 Sign Out</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════
+             FIXED 5-TAB BOTTOM NAVIGATION BAR
+        ══════════════════════════════════════════════════════════════ -->
+        <nav class="mobile-bottom-nav" id="mobileBottomNav">
+            <div class="bottom-nav-item active" id="navTabHome" onclick="showScreen('screenHome')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span class="bottom-nav-label">Home</span>
+            </div>
+            <div class="bottom-nav-item" id="navTabOutbox" onclick="showScreen('screenOutbox')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+                <span class="bottom-nav-label">Outbox</span>
+                <span class="nav-badge-pill" id="bNavOutboxBadge" style="display:none;">0</span>
+            </div>
+            <div class="bottom-nav-item" id="navTabLeads" onclick="showScreen('screenLeads')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+                <span class="bottom-nav-label">Leads</span>
+            </div>
+            <div class="bottom-nav-item" id="navTabInquiries" onclick="showScreen('screenInquiries')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                <span class="bottom-nav-label">Inquiries</span>
+                <span class="nav-badge-pill" id="bNavInboxBadge" style="display:none;">0</span>
+            </div>
+            <div class="bottom-nav-item" id="navTabMore" onclick="openDrawer()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+                <span class="bottom-nav-label">More</span>
+            </div>
+        </nav>
+
+        <!-- Toast Feedback -->
+        <div class="mobile-toast" id="mobileToast">Notification message</div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         MOBILE CLIENT CONTROLLER LOGIC
+    ══════════════════════════════════════════════════════════════ -->
+    <script>
+        // Application Global State
+        let currentQueue = [];
+        let currentInbox = [];
+        let selectedDraft = null;
+        let selectedInboxMsg = null;
+        let isAuth = false;
+        let authEmail = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initMobileTime();
+            initAppSession();
+        });
+
+        function initMobileTime() {
+            const clockEl = document.getElementById('statusBarClock');
+            const now = new Date();
+            clockEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function initAppSession() {
+            // Check auth from backend
+            try {
+                const res = await fetch('/auth/status');
+                const data = await res.json();
+                isAuth = data.authenticated;
+                authEmail = data.email;
+
+                if (isAuth && authEmail) {
+                    const name = authEmail.split('@')[0].replace(/[._]/g, ' ');
+                    const initials = name.slice(0, 2).toUpperCase();
+                    document.getElementById('homeUserName').textContent = name;
+                    document.getElementById('homeAvatar').textContent = initials;
+                    document.getElementById('drawerUserName').textContent = name;
+                    document.getElementById('drawerUserEmail').textContent = authEmail;
+                    document.getElementById('drawerAvatar').textContent = initials;
+                }
+            } catch (e) {}
+
+            // Show Splash Screen briefly then navigate appropriately
+            setTimeout(() => {
+                if (isAuth) {
+                    showScreen('screenHome');
+                } else {
+                    showScreen('screenOnboarding');
+                }
+                fetchQueueData();
+                loadMobileInbox();
+            }, 1200);
+        }
+
+        // Navigation Controller
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen-view').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById(screenId);
+            if (target) target.classList.add('active');
+
+            // Hide bottom nav on fullscreen flows
+            const bottomNav = document.getElementById('mobileBottomNav');
+            const isFullscreen = target.classList.contains('fullscreen-mode');
+            bottomNav.style.display = isFullscreen ? 'none' : 'flex';
+
+            // Highlight Bottom Bar Tabs
+            document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+            if (screenId === 'screenHome') document.getElementById('navTabHome').classList.add('active');
+            if (screenId === 'screenOutbox' || screenId === 'screenDraftDetail') document.getElementById('navTabOutbox').classList.add('active');
+            if (screenId === 'screenLeads') document.getElementById('navTabLeads').classList.add('active');
+            if (screenId === 'screenInquiries' || screenId === 'screenEmailDetail' || screenId === 'screenDraftReply') document.getElementById('navTabInquiries').classList.add('active');
+        }
+
+        // Drawer Controls
+        function openDrawer() {
+            document.getElementById('appDrawerOverlay').classList.add('open');
+        }
+        function closeDrawer() {
+            document.getElementById('appDrawerOverlay').classList.remove('open');
+        }
+
+        let allDraftsList = [];
+        let activeOutboxFilter = 'all';
+
+        // ──────────────────────────────────────────────
+        // SCREEN 7 & 8: OUTBOX DRAFTS & DETAIL
+        // ──────────────────────────────────────────────
+        async function fetchQueueData() {
+            try {
+                const res = await fetch('/api/queue');
+                const data = await res.json();
+                if (data.success) {
+                    currentQueue = data.queue || [];
+                    const sentLeads = data.sent_leads || [];
+                    const approvedLeads = data.approved_leads || [];
+
+                    // Combine items for multi-status filtering
+                    allDraftsList = [
+                        ...currentQueue.map(d => ({ ...d, status: d.status || 'Pending Review' })),
+                        ...approvedLeads.map(d => ({ ...d, status: 'Approved' })),
+                        ...sentLeads.map(d => ({ ...d, status: 'Sent Out' }))
+                    ];
+
+                    // Update Metrics
+                    const pending = currentQueue.length;
+                    const sent = data.metrics ? data.metrics.sent : sentLeads.length;
+                    const approved = data.metrics ? data.metrics.approved : approvedLeads.length;
+
+                    document.getElementById('homePendingCount').textContent = `${pending} Pending`;
+                    document.getElementById('metricPendingMobile').textContent = pending;
+                    document.getElementById('metricApprovedMobile').textContent = approved;
+                    document.getElementById('metricSentMobile').textContent = sent;
+
+                    document.getElementById('countDraftAll').textContent = allDraftsList.length;
+                    const badge = document.getElementById('bNavOutboxBadge');
+                    if (pending > 0) {
+                        badge.textContent = pending;
+                        badge.style.display = 'block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+
+                    filterDrafts(activeOutboxFilter);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function filterDrafts(filterKey) {
+            activeOutboxFilter = filterKey;
+            ['all', 'pending', 'approved', 'sent'].forEach(k => {
+                const chipId = k === 'all' ? 'chipOutboxAll' : (k === 'pending' ? 'chipOutboxPending' : (k === 'approved' ? 'chipOutboxApproved' : 'chipOutboxSent'));
+                const chip = document.getElementById(chipId);
+                if (chip) {
+                    if (k === filterKey) chip.classList.add('active');
+                    else chip.classList.remove('active');
+                }
+            });
+
+            let filtered = allDraftsList;
+            if (filterKey === 'pending') {
+                filtered = allDraftsList.filter(d => (d.status || '').toLowerCase().includes('pending') || (d.status || '').toLowerCase().includes('waiting'));
+            } else if (filterKey === 'approved') {
+                filtered = allDraftsList.filter(d => (d.status || '').toLowerCase().includes('approved'));
+            } else if (filterKey === 'sent') {
+                filtered = allDraftsList.filter(d => (d.status || '').toLowerCase().includes('sent'));
+            }
+
+            const searchVal = (document.getElementById('searchDraftsInput')?.value || '').trim().toLowerCase();
+            if (searchVal) {
+                filtered = filtered.filter(d => 
+                    (d.company_name || '').toLowerCase().includes(searchVal) ||
+                    (d.email || '').toLowerCase().includes(searchVal) ||
+                    (d.subject || '').toLowerCase().includes(searchVal)
+                );
+            }
+
+            renderMobileDrafts(filtered);
+        }
+
+        function handleSearchDrafts(val) {
+            filterDrafts(activeOutboxFilter);
+        }
+
+        function renderMobileDrafts(drafts) {
+            const listEl = document.getElementById('mobileDraftsList');
+            const emptyEl = document.getElementById('outboxEmptyView');
+
+            if (!drafts || drafts.length === 0) {
+                listEl.innerHTML = '';
+                emptyEl.style.display = 'block';
+                return;
+            }
+
+            emptyEl.style.display = 'none';
+            listEl.innerHTML = drafts.map(d => {
+                const isSent = (d.status || '').toLowerCase().includes('sent');
+                const isApproved = (d.status || '').toLowerCase().includes('approved');
+                const badgeClass = isSent ? 'pill-badge green' : (isApproved ? 'pill-badge blue' : 'pill-badge pending');
+                const badgeLabel = isSent ? 'Sent Out' : (isApproved ? 'Approved' : 'Pending Review');
+                const actionLabel = isSent ? 'View Sent &rarr;' : 'Review &rarr;';
+
+                return `
+                    <div style="background:#ffffff; border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:16px; box-shadow:var(--shadow-card); cursor:pointer;" onclick="openMobileDraftDetail('${d.queue_id}')">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                            <span style="font-weight:700; font-size:14px; color:var(--primary-navy);">${escapeHtml(d.company_name)}</span>
+                            <span style="font-size:11px; color:var(--text-muted);">${escapeHtml(d.created_at || 'Just now')}</span>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px; font-family:'JetBrains Mono', monospace;">${escapeHtml(d.email)}</div>
+                        <div style="font-size:13px; font-weight:500; color:var(--text-dark); margin-bottom:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(d.subject)}</div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="${badgeClass}">${badgeLabel}</span>
+                            <span style="font-size:12px; font-weight:600; color:var(--action-blue);">${actionLabel}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function cleanHtmlForDisplay(raw) {
+            if (!raw) return '';
+            if (raw.includes('<html') || raw.includes('<!DOCTYPE') || raw.includes('<body') || raw.includes('<div') || raw.includes('<p')) {
+                // If full HTML template, sanitize and display cleanly inside rendered container
+                // Remove scripts
+                let safe = raw.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+                return safe;
+            }
+            // If plain text with newlines, convert to readable paragraphs
+            return raw.split('\n\n').map(p => `<p style="margin-bottom:10px;">${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
+        }
+
+        function setDraftBodyMode(mode) {
+            const previewBox = document.getElementById('detailDraftPreviewBox');
+            const textarea = document.getElementById('detailDraftBody');
+            const btnPrev = document.getElementById('btnDraftModePreview');
+            const btnEdit = document.getElementById('btnDraftModeEdit');
+
+            if (mode === 'preview') {
+                previewBox.style.display = 'block';
+                textarea.style.display = 'none';
+                previewBox.innerHTML = cleanHtmlForDisplay(textarea.value);
+                btnPrev.style.background = '#ffffff';
+                btnPrev.style.color = 'var(--action-blue)';
+                btnPrev.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+                btnEdit.style.background = 'transparent';
+                btnEdit.style.color = 'var(--text-secondary)';
+                btnEdit.style.boxShadow = 'none';
+            } else {
+                previewBox.style.display = 'none';
+                textarea.style.display = 'block';
+                btnEdit.style.background = '#ffffff';
+                btnEdit.style.color = 'var(--action-blue)';
+                btnEdit.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+                btnPrev.style.background = 'transparent';
+                btnPrev.style.color = 'var(--text-secondary)';
+                btnPrev.style.boxShadow = 'none';
+            }
+        }
+
+        function openMobileDraftDetail(queueId) {
+            selectedDraft = allDraftsList.find(q => q.queue_id === queueId) || currentQueue.find(q => q.queue_id === queueId);
+            if (!selectedDraft) return;
+
+            document.getElementById('detailDraftCompany').textContent = selectedDraft.company_name;
+            document.getElementById('detailDraftEmail').textContent = selectedDraft.email;
+            document.getElementById('detailDraftSubject').value = selectedDraft.subject || '';
+            document.getElementById('detailDraftBody').value = selectedDraft.body || '';
+
+            const isSent = (selectedDraft.status || '').toLowerCase().includes('sent');
+            const isApproved = (selectedDraft.status || '').toLowerCase().includes('approved');
+            const badge = document.getElementById('detailDraftBadge');
+            if (badge) {
+                badge.className = isSent ? 'pill-badge green' : (isApproved ? 'pill-badge blue' : 'pill-badge pending');
+                badge.textContent = isSent ? 'Sent Out' : (isApproved ? 'Approved' : 'Pending Review');
+            }
+
+            setDraftBodyMode('preview');
+            showScreen('screenDraftDetail');
+        }
+
+        async function approveCurrentMobileDraft() {
+            if (!isAuth) {
+                notifyAuth();
+                return;
+            }
+            if (!selectedDraft) return;
+
+            showMobileToast(`Dispatching email to ${selectedDraft.email}…`);
+            const fd = new FormData();
+            fd.append('queue_id', selectedDraft.queue_id);
+            fd.append('lead_id', selectedDraft.lead_id);
+            fd.append('subject', document.getElementById('detailDraftSubject').value);
+            fd.append('body', document.getElementById('detailDraftBody').value);
+
+            try {
+                const res = await fetch('/api/approve_send', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showMobileToast(`Dispatched to ${selectedDraft.email}!`);
+                    fetchQueueData();
+                    showScreen('screenOutbox');
+                } else if (res.status === 401 || (data.detail && data.detail.includes('GOOGLE_AUTH_REQUIRED'))) {
+                    notifyAuth();
+                } else {
+                    alert('Error: ' + data.detail);
+                }
+            } catch (e) {
+                alert('Send failed: ' + e.message);
+            }
+        }
+
+        async function saveCurrentMobileDraft() {
+            if (!selectedDraft) return;
+            const subj = document.getElementById('detailDraftSubject').value;
+            const body = document.getElementById('detailDraftBody').value;
+
+            const fd = new FormData();
+            fd.append('queue_id', selectedDraft.queue_id);
+            fd.append('subject', subj);
+            fd.append('body', body);
+
+            try {
+                const res = await fetch('/api/update_draft', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.success) {
+                    showMobileToast('Draft changes saved in cache.');
+                    selectedDraft.subject = subj;
+                    selectedDraft.body = body;
+                    fetchQueueData();
+                }
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        // ──────────────────────────────────────────────
+        // SCREEN 9 & 10: NEW LEADS & INGESTION
+        // ──────────────────────────────────────────────
+        function toggleLeadsMode(mode) {
+            if (mode === 'upload') {
+                document.getElementById('panelUploadFile').style.display = 'block';
+                document.getElementById('panelSingleLead').style.display = 'none';
+                document.getElementById('btnTabUpload').className = 'btn-mobile-primary';
+                document.getElementById('btnTabSingle').className = 'btn-mobile-secondary';
+            } else {
+                document.getElementById('panelUploadFile').style.display = 'none';
+                document.getElementById('panelSingleLead').style.display = 'block';
+                document.getElementById('btnTabSingle').className = 'btn-mobile-primary';
+                document.getElementById('btnTabUpload').className = 'btn-mobile-secondary';
+            }
+        }
+
+        async function handleMobileFileSelected(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+
+            const file = files[0];
+            const isAutoSend = document.getElementById('chkMobileDirectSendFile').checked;
+            if (isAutoSend && !isAuth) {
+                notifyAuth();
+                return;
+            }
+
+            // Show Processing Screen (Screen 11)
+            showScreen('screenProcessing');
+
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('auto_send', isAutoSend);
+
+            try {
+                const res = await fetch('/api/upload_file', { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Populate Screen 12 (Results)
+                    document.getElementById('resTotal').textContent = data.total_detected || data.count;
+                    document.getElementById('resValid').textContent = data.valid_leads || data.count;
+                    fetchQueueData();
+                    showScreen('screenResults');
+                } else {
+                    alert('Upload failed: ' + data.detail);
+                    showScreen('screenLeads');
+                }
+            } catch (err) {
+                alert(err.message);
+                showScreen('screenLeads');
+            }
+        }
+
+        async function submitMobileSingleLead(e) {
+            e.preventDefault();
+            const isAutoSend = document.getElementById('chkMobileDirectSendSingle').checked;
+            if (isAutoSend && !isAuth) {
+                notifyAuth();
+                return;
+            }
+
+            const cName = document.getElementById('mobileSingleCompany').value.trim();
+            const email = document.getElementById('mobileSingleEmail').value.trim();
+            const demand = document.getElementById('mobileSingleDemand').value.trim();
+
+            showScreen('screenProcessing');
+
+            const fd = new FormData();
+            fd.append('company_name', cName);
+            fd.append('email', email);
+            fd.append('demand', demand);
+            fd.append('auto_send', isAutoSend);
+
+            try {
+                const res = await fetch('/api/submit_manual', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.success) {
+                    showMobileToast(isAutoSend ? 'Direct email sent!' : 'Personalized draft queued');
+                    fetchQueueData();
+                    showScreen('screenOutbox');
+                } else {
+                    alert('Error: ' + data.detail);
+                    showScreen('screenLeads');
+                }
+            } catch (err) {
+                alert(err.message);
+                showScreen('screenLeads');
+            }
+        }
+
+        // ──────────────────────────────────────────────
+        // SCREEN 13, 14, 15: INBOX, FULL DETAIL & SMART REPLY
+        // ──────────────────────────────────────────────
+        async function loadMobileInbox() {
+            try {
+                const res = await fetch('/api/inbox/recent');
+                const data = await res.json();
+                if (data.success) {
+                    currentInbox = data.emails || [];
+                    document.getElementById('inboxCountAll').textContent = currentInbox.length;
+                    document.getElementById('homeInboxCount').textContent = `${currentInbox.length} Messages`;
+
+                    const badge = document.getElementById('bNavInboxBadge');
+                    if (currentInbox.length > 0) {
+                        badge.textContent = currentInbox.length;
+                        badge.style.display = 'block';
+                    }
+
+                    renderMobileInbox(currentInbox);
+                }
+            } catch (e) {}
+        }
+
+        function renderMobileInbox(emails) {
+            const listEl = document.getElementById('mobileInboxList');
+            if (!emails || emails.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center; padding:40px; color:#64748b;">No customer inquiries found</div>';
+                return;
+            }
+
+            listEl.innerHTML = emails.map((msg, idx) => `
+                <div style="background:#ffffff; border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:16px; cursor:pointer;" onclick="openMobileEmailDetail(${idx})">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <span style="font-weight:700; font-size:13.5px; color:var(--primary-navy);">${escapeHtml(msg.from)}</span>
+                        <span style="font-size:11px; color:var(--text-muted);">${escapeHtml(msg.date)}</span>
+                    </div>
+                    <div style="font-size:13px; font-weight:600; color:var(--text-dark); margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(msg.subject)}</div>
+                    <div style="font-size:12px; color:var(--text-secondary); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${escapeHtml(msg.preview)}</div>
+                </div>
+            `).join('');
+        }
+
+        function openMobileEmailDetail(idx) {
+            const msg = currentInbox[idx];
+            if (!msg) return;
+
+            selectedInboxMsg = msg;
+            document.getElementById('emailViewSubject').textContent = msg.subject;
+            document.getElementById('emailViewDate').textContent = msg.date;
+            document.getElementById('emailViewFrom').textContent = msg.from;
+            document.getElementById('emailViewEmail').textContent = msg.from_email;
+
+            // Full Body & HTML View
+            toggleEmailPreviewMode('text');
+            showScreen('screenEmailDetail');
+        }
+
+        function toggleEmailPreviewMode(mode) {
+            const textEl = document.getElementById('emailViewBodyText');
+            const frameEl = document.getElementById('emailViewBodyFrame');
+            const btnT = document.getElementById('btnToggleText');
+            const btnH = document.getElementById('btnToggleHtml');
+
+            if (!selectedInboxMsg) return;
+
+            if (mode === 'html' && selectedInboxMsg.html) {
+                btnT.style.background = '#f1f5f9';
+                btnT.style.color = '#475569';
+                btnH.style.background = '#2563eb';
+                btnH.style.color = '#fff';
+
+                textEl.style.display = 'none';
+                frameEl.style.display = 'block';
+
+                const doc = frameEl.contentWindow.document;
+                doc.open();
+                doc.write(selectedInboxMsg.html);
+                doc.close();
+            } else {
+                btnH.style.background = '#f1f5f9';
+                btnH.style.color = '#475569';
+                btnT.style.background = '#2563eb';
+                btnT.style.color = '#fff';
+
+                frameEl.style.display = 'none';
+                textEl.style.display = 'block';
+                textEl.textContent = selectedInboxMsg.body || selectedInboxMsg.preview || '';
+            }
+        }
+
+        async function prepareAIReply() {
+            if (!selectedInboxMsg) return;
+
+            showMobileToast('Formulating consultative technical reply…');
+            const fd = new FormData();
+            fd.append('from_email', selectedInboxMsg.from_email);
+            fd.append('subject', selectedInboxMsg.subject);
+            fd.append('body', selectedInboxMsg.body);
+            fd.append('message_id', selectedInboxMsg.message_id || '');
+
+            try {
+                const res = await fetch('/api/inbox/generate_reply', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('replySubjectInput').value = data.reply_subject;
+                    document.getElementById('replyBodyInput').value = data.reply_body;
+                    if (data.summary) {
+                        document.getElementById('replyAnalysisBox').textContent = `Inquiry Focus: ${data.summary}`;
+                    }
+                    showScreen('screenDraftReply');
+                } else {
+                    alert('Draft generation failed: ' + data.detail);
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        async function submitMobileReply() {
+            if (!isAuth) {
+                notifyAuth();
+                return;
+            }
+            if (!selectedInboxMsg) return;
+
+            const toEmail = selectedInboxMsg.from_email;
+            const subj = document.getElementById('replySubjectInput').value;
+            const body = document.getElementById('replyBodyInput').value;
+
+            showMobileToast(`Dispatching reply to ${toEmail}…`);
+            const fd = new FormData();
+            fd.append('to_email', toEmail);
+            fd.append('subject', subj);
+            fd.append('body', body);
+            fd.append('in_reply_to', selectedInboxMsg.message_id || '');
+
+            try {
+                const res = await fetch('/api/inbox/send_reply', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showMobileToast(`Technical reply sent to ${toEmail}!`);
+                    showScreen('screenInquiries');
+                } else if (res.status === 401) {
+                    notifyAuth();
+                } else {
+                    alert('Error: ' + data.detail);
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // Auth Helpers
+        async function handleMobileLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('btnLoginSubmit');
+
+            btn.disabled = true;
+            btn.textContent = 'Signing in…';
+
+            try {
+                const res = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showMobileToast('Welcome back, ' + (data.user.name || data.user.email) + '!');
+                    localStorage.setItem('sapcon_mobile_user', JSON.stringify(data.user));
+                    setTimeout(() => { showScreen('screenHome'); }, 800);
+                } else {
+                    alert('Sign In Failed: ' + (data.detail || 'Invalid email or password'));
+                }
+            } catch (err) {
+                alert('Sign In Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        }
+
+        async function handleMobileSignup(e) {
+            e.preventDefault();
+            const name = document.getElementById('signupName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const confirm = document.getElementById('signupConfirm').value;
+
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters long.');
+                return;
+            }
+            if (password !== confirm) {
+                alert('Passwords do not match. Please verify.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showMobileToast('Account created successfully! Welcome.');
+                    localStorage.setItem('sapcon_mobile_user', JSON.stringify(data.user));
+                    setTimeout(() => { showScreen('screenHome'); }, 800);
+                } else {
+                    alert('Sign Up Failed: ' + (data.detail || 'Could not register'));
+                }
+            } catch (err) {
+                alert('Sign Up Error: ' + err.message);
+            }
+        }
+
+        function handleForgotPassword(e) {
+            e.preventDefault();
+            showMobileToast('Password reset link sent to your email.');
+            setTimeout(() => { showScreen('screenLogin'); }, 1500);
+        }
+
+        async function handleAppSignout() {
+            await fetch('/auth/logout', { method: 'POST' });
+            localStorage.removeItem('sapcon_mobile_user');
+            showMobileToast('Signed out successfully.');
+            closeDrawer();
+            showScreen('screenLogin');
+        }
+
+        function notifyAuth() {
+            if (confirm("Google OAuth Connection Required!\n\nAll outgoing emails are sent directly through your authenticated Google Account (SMTP has been completely eliminated).\n\nWould you like to connect your Google account now?")) {
+                window.location.href = '/auth/login';
+            }
+        }
+
+        function openCatalogSheet() {
+            showMobileToast('Opening SAPCON verified solutions catalog…');
+            showScreen('screenHome');
+        }
+
+        function showMobileToast(msg) {
+            const toast = document.getElementById('mobileToast');
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+            });
+        }
+    </script>
+</body>
+</html>

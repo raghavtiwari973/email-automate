@@ -1,0 +1,54 @@
+# Environment variables and sensitive secrets
+.env
+.env.*
+!.env.example
+google_credentials.json
+google_token.json
+
+# Local Databases and storage
+*.db
+*.sqlite
+*.sqlite3
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Temporary generated files & drafts
+drafts/
+*.tmp
+*.log
+
+# Flutter & Mobile build artifacts
+**/build/
+**/.dart_tool/
+**/.pub-cache/
+**/.pub/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+
+# Android build outputs & local properties
+**/android/.gradle/
+**/android/local.properties
+**/android/app/build/
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+
+# IDE / Editor configurations
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+Thumbs.db
