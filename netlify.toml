@@ -1,6 +1,5 @@
-# Pre-built static site deployment (No build command needed on Netlify)
 [build]
-  publish = "sapcon_mobile/build/web"
+  publish = "dist"
 
 [[redirects]]
   from = "/*"
