@@ -10,6 +10,12 @@ google_token.json
 *.sqlite
 *.sqlite3
 
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
 # Python cache & virtual environments
 __pycache__/
 *.py[cod]

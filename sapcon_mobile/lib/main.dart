@@ -354,16 +354,34 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
       final uri = Uri.parse(targetUrl);
       final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!launched) {
-        // Fallback: try platform default mode
         await launchUrl(uri, mode: LaunchMode.platformDefault);
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Opening Google Sign In in your browser...'),
-          duration: Duration(seconds: 3),
+          content: Text('Opening Google Sign In... Complete login in browser.'),
+          duration: Duration(seconds: 4),
         ),
       );
+
+      // 2. Active background polling: checks every 1.5 seconds if user authorized in browser
+      Timer.periodic(const Duration(milliseconds: 1500), (timer) async {
+        if (!mounted || timer.tick > 80) {
+          timer.cancel();
+          return;
+        }
+        final auth = await ApiService.getAuthStatus();
+        if (auth['authenticated'] == true && auth['email'] != null) {
+          timer.cancel();
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MainNavigationScaffold(userEmail: auth['email']),
+            ),
+          );
+        }
+      });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -570,16 +588,34 @@ class _SignUpScreenState extends State<SignUpScreen> with WidgetsBindingObserver
       final uri = Uri.parse(targetUrl);
       final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!launched) {
-        // Fallback: try platform default mode
         await launchUrl(uri, mode: LaunchMode.platformDefault);
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Opening Google Sign In in your browser...'),
-          duration: Duration(seconds: 3),
+          content: Text('Opening Google Sign In... Complete login in browser.'),
+          duration: Duration(seconds: 4),
         ),
       );
+
+      // 2. Active background polling: checks every 1.5 seconds if user authorized in browser
+      Timer.periodic(const Duration(milliseconds: 1500), (timer) async {
+        if (!mounted || timer.tick > 80) {
+          timer.cancel();
+          return;
+        }
+        final auth = await ApiService.getAuthStatus();
+        if (auth['authenticated'] == true && auth['email'] != null) {
+          timer.cancel();
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MainNavigationScaffold(userEmail: auth['email']),
+            ),
+          );
+        }
+      });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

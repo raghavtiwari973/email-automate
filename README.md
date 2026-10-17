@@ -14,4 +14,16 @@ Normal run (new rows only):
 `python main.py --limit 5`
 
 The original `leads.csv` remains unchanged. Email sending stays disabled.
-# email-automate
+
+## Web Dashboard & Server (Node.js)
+
+To run the interactive web dashboard and backend server:
+```bash
+npm start
+```
+or:
+```bash
+node server.js
+```
+The workbench will run on `http://localhost:8000`. It serves the frontend workbench and all API routes (`/api/leads`, `/api/queue`, `/auth/login`, etc.).
+
