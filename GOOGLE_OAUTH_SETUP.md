@@ -34,11 +34,18 @@
 2. Click **"+ Create Credentials"** → **OAuth client ID**
 3. Application type: **Web application**
 4. Name: `Sapcon AI`
-5. Under **Authorized redirect URIs**, add:
+5. Under **Authorized JavaScript origins**, add:
+   ```
+   http://localhost:8000
+   https://your-live-domain.netlify.app   (or your custom live domain)
+   ```
+6. Under **Authorized redirect URIs**, add both:
    ```
    http://localhost:8000/auth/callback
+   https://your-live-domain.netlify.app/auth/callback
    ```
-6. Click **Create**
+   *(If your backend server is on Render, Railway, etc., also add: `https://your-backend.onrender.com/auth/callback`)*
+7. Click **Create**
 
 ---
 

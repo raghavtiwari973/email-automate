@@ -204,9 +204,20 @@ app.get('/auth/status', async (req, res) => {
   }
 });
 
+function getRequestRedirectUri(req) {
+  if (process.env.REDIRECT_URI) return process.env.REDIRECT_URI;
+  const host = req.get('x-forwarded-host') || req.get('host');
+  const proto = req.get('x-forwarded-proto') || req.protocol || 'http';
+  if (host && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+    return `${proto}://${host}/auth/callback`;
+  }
+  return null;
+}
+
 app.get('/auth/login', (req, res) => {
   try {
-    const authUrl = getAuthorizationUrl();
+    const callbackUri = getRequestRedirectUri(req);
+    const authUrl = getAuthorizationUrl(callbackUri);
     return res.redirect(authUrl);
   } catch (err) {
     return res.status(500).json({ detail: err.message });
@@ -215,7 +226,8 @@ app.get('/auth/login', (req, res) => {
 
 app.get('/auth/login-url', (req, res) => {
   try {
-    const authUrl = getAuthorizationUrl();
+    const callbackUri = getRequestRedirectUri(req);
+    const authUrl = getAuthorizationUrl(callbackUri);
     return res.json({ url: authUrl });
   } catch (err) {
     return res.status(500).json({ detail: err.message });
@@ -247,7 +259,8 @@ app.get('/auth/callback', async (req, res) => {
   }
 
   try {
-    await exchangeCodeForToken(code);
+    const callbackUri = getRequestRedirectUri(req);
+    await exchangeCodeForToken(code, callbackUri);
     const googleEmail = await getLoggedInEmail();
     if (googleEmail) {
       await upsertGoogleUser(googleEmail);
@@ -907,12 +920,16 @@ app.get('/api/profile', (req, res) => {
 });
 
 // Initialize DB & Start Server
-initDb()
-  .then(() => {
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`\n🚀 SAPCON Node.js Server listening on http://localhost:${PORT}`);
+if (require.main === module) {
+  initDb()
+    .then(() => {
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log(`\n🚀 SAPCON Node.js Server listening on http://localhost:${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('Fatal initialization error:', err);
     });
-  })
-  .catch((err) => {
-    console.error('Fatal initialization error:', err);
-  });
+}
+
+module.exports = { app, initDb };

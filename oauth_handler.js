@@ -18,6 +18,8 @@ const REDIRECT_URI = 'http://localhost:8000/auth/callback';
 let _oauth2Client = null;
 
 function loadClientConfig() {
+  const redirectUri = process.env.REDIRECT_URI || process.env.GOOGLE_REDIRECT_URI || null;
+
   if (fs.existsSync(CLIENT_SECRET_PATH)) {
     const raw = fs.readFileSync(CLIENT_SECRET_PATH, 'utf-8');
     const parsed = JSON.parse(raw);
@@ -26,7 +28,7 @@ function loadClientConfig() {
       return {
         clientId: cfg.client_id,
         clientSecret: cfg.client_secret,
-        redirectUri: (cfg.redirect_uris && cfg.redirect_uris[0]) || REDIRECT_URI,
+        redirectUri: redirectUri || (cfg.redirect_uris && cfg.redirect_uris[0]) || REDIRECT_URI,
       };
     }
   }
@@ -41,15 +43,14 @@ function loadClientConfig() {
   return {
     clientId,
     clientSecret,
-    redirectUri: REDIRECT_URI,
+    redirectUri: redirectUri || REDIRECT_URI,
   };
 }
 
-function getOAuth2Client() {
-  if (_oauth2Client) return _oauth2Client;
+function getOAuth2Client(customRedirectUri) {
   const { clientId, clientSecret, redirectUri } = loadClientConfig();
-  _oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
-  return _oauth2Client;
+  const effectiveUri = customRedirectUri || redirectUri;
+  return new google.auth.OAuth2(clientId, clientSecret, effectiveUri);
 }
 
 function getCredentials() {
@@ -100,8 +101,8 @@ function logout() {
   }
 }
 
-function getAuthorizationUrl() {
-  const client = getOAuth2Client();
+function getAuthorizationUrl(customRedirectUri) {
+  const client = getOAuth2Client(customRedirectUri);
   return client.generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent',
@@ -109,8 +110,8 @@ function getAuthorizationUrl() {
   });
 }
 
-async function exchangeCodeForToken(code) {
-  const client = getOAuth2Client();
+async function exchangeCodeForToken(code, customRedirectUri) {
+  const client = getOAuth2Client(customRedirectUri);
   const { tokens } = await client.getToken(code);
   client.setCredentials(tokens);
   saveToken(tokens);

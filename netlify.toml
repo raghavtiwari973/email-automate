@@ -1,16 +1,17 @@
 [build]
   publish = "dist"
+  functions = "netlify/functions"
 
-# Reverse Proxy rules (forward /api and /auth to live Python backend)
+# Serverless function rules for API and Auth
 [[redirects]]
   from = "/api/*"
-  to = "https://your-python-backend.onrender.com/api/:splat"
+  to = "/.netlify/functions/server/api/:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/auth/*"
-  to = "https://your-python-backend.onrender.com/auth/:splat"
+  to = "/.netlify/functions/server/auth/:splat"
   status = 200
   force = true
 
