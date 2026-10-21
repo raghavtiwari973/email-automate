@@ -236,12 +236,9 @@ function getRequestRedirectUri(req) {
 
 function getYahooRequestRedirectUri(req) {
   if (process.env.YAHOO_REDIRECT_URI) return process.env.YAHOO_REDIRECT_URI;
-  const host = req.get('x-forwarded-host') || req.get('host');
+  const host = req.get('x-forwarded-host') || req.get('host') || 'localhost:8000';
   const proto = req.get('x-forwarded-proto') || req.protocol || 'http';
-  if (host && !host.includes('localhost') && !host.includes('127.0.0.1')) {
-    return `${proto}://${host}/auth/yahoo/callback`;
-  }
-  return 'https://sapconmail.netlify.app/auth/yahoo/callback';
+  return `${proto}://${host}/auth/yahoo/callback`;
 }
 
 app.get('/auth/yahoo', (req, res) => {
