@@ -3,7 +3,8 @@ const path = require('path');
 const crypto = require('crypto');
 const initSqlJs = require('sql.js');
 
-const DB_PATH = path.join(__dirname, 'users.db');
+const isServerless = Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const DB_PATH = isServerless ? path.join('/tmp', 'users.db') : path.join(__dirname, 'users.db');
 
 let db = null;
 let SQL = null;
@@ -35,8 +36,12 @@ async function initDb() {
 
 function saveDb() {
   if (!db) return;
-  const data = db.export();
-  fs.writeFileSync(DB_PATH, Buffer.from(data));
+  try {
+    const data = db.export();
+    fs.writeFileSync(DB_PATH, Buffer.from(data));
+  } catch (err) {
+    console.warn('saveDb warning (safe to ignore in transient serverless):', err.message);
+  }
 }
 
 function hashPassword(password, salt) {

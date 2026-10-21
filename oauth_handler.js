@@ -2,8 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
 
+const isServerless = Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
 const ROOT = __dirname;
-const TOKEN_PATH = path.join(ROOT, 'google_token.json');
+const TOKEN_PATH = isServerless ? path.join('/tmp', 'google_token.json') : path.join(ROOT, 'google_token.json');
 const CLIENT_SECRET_PATH = path.join(ROOT, 'google_credentials.json');
 
 const SCOPES = [
@@ -256,7 +257,7 @@ async function sendEmailGmail({ toEmail, subject, body, fromName = 'SAPCON Instr
 // ──────────────────────────────────────────────
 // Yahoo OAuth 2.0 Helpers
 // ──────────────────────────────────────────────
-const YAHOO_TOKEN_PATH = path.join(ROOT, 'yahoo_token.json');
+const YAHOO_TOKEN_PATH = isServerless ? path.join('/tmp', 'yahoo_token.json') : path.join(ROOT, 'yahoo_token.json');
 const YAHOO_AUTH_URL = 'https://api.login.yahoo.com/oauth2/request_auth';
 const YAHOO_TOKEN_URL = 'https://api.login.yahoo.com/oauth2/get_token';
 const YAHOO_USERINFO_URL = 'https://api.login.yahoo.com/openid/v1/userinfo';
