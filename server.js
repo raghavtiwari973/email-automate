@@ -21,6 +21,11 @@ const {
   exchangeCodeForToken,
   sendEmailGmail,
   logout,
+  getYahooAuthorizationUrl,
+  exchangeYahooCodeForToken,
+  isYahooAuthenticated,
+  getYahooLoggedInEmail,
+  logoutYahoo,
 } = require('./oauth_handler');
 
 const { fetchRecentInboxEmails } = require('./email_reader');
@@ -194,13 +199,28 @@ app.get('/auth/status', async (req, res) => {
       }
     }
 
+    const yahooAuthenticated = isYahooAuthenticated();
+    let yahooEmail = null;
+    if (yahooAuthenticated) {
+      yahooEmail = await getYahooLoggedInEmail();
+    }
+
     return res.json({
       authenticated,
       email,
       user: userRecord,
+      yahoo: {
+        authenticated: yahooAuthenticated,
+        email: yahooEmail,
+      },
     });
   } catch (err) {
-    return res.json({ authenticated: false, email: null, user: null });
+    return res.json({
+      authenticated: false,
+      email: null,
+      user: null,
+      yahoo: { authenticated: false, email: null },
+    });
   }
 });
 
@@ -213,6 +233,114 @@ function getRequestRedirectUri(req) {
   }
   return null;
 }
+
+function getYahooRequestRedirectUri(req) {
+  if (process.env.YAHOO_REDIRECT_URI) return process.env.YAHOO_REDIRECT_URI;
+  const host = req.get('x-forwarded-host') || req.get('host');
+  const proto = req.get('x-forwarded-proto') || req.protocol || 'http';
+  if (host && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+    return `${proto}://${host}/auth/yahoo/callback`;
+  }
+  return 'https://sapconmail.netlify.app/auth/yahoo/callback';
+}
+
+app.get('/auth/yahoo', (req, res) => {
+  try {
+    const callbackUri = getYahooRequestRedirectUri(req);
+    const authUrl = getYahooAuthorizationUrl(callbackUri);
+    return res.redirect(authUrl);
+  } catch (err) {
+    return res.status(500).json({ detail: err.message });
+  }
+});
+
+app.get('/auth/yahoo/login-url', (req, res) => {
+  try {
+    const callbackUri = getYahooRequestRedirectUri(req);
+    const authUrl = getYahooAuthorizationUrl(callbackUri);
+    return res.json({ url: authUrl });
+  } catch (err) {
+    return res.status(500).json({ detail: err.message });
+  }
+});
+
+app.get('/auth/yahoo/callback', async (req, res) => {
+  const { code, error } = req.query;
+
+  if (error) {
+    return res.status(400).send(`
+      <!DOCTYPE html>
+      <html>
+      <head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Yahoo Authentication Error</title></head>
+      <body style="font-family:sans-serif; text-align:center; padding:40px 20px; background:#F8FAFC;">
+          <div style="background:white; border-radius:16px; padding:30px; max-width:400px; margin:0 auto; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+              <div style="font-size:48px; margin-bottom:16px;">❌</div>
+              <h2 style="color:#DC2626; margin-bottom:8px;">Yahoo Sign In Failed</h2>
+              <p style="color:#64748B; font-size:14px; margin-bottom:24px;">${error}</p>
+              <a href="/auth/yahoo" style="display:inline-block; background:#6001D2; color:white; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600;">Try Again</a>
+          </div>
+      </body>
+      </html>
+    `);
+  }
+
+  if (!code) {
+    return res.status(400).send('Missing auth code from Yahoo');
+  }
+
+  try {
+    const callbackUri = getYahooRequestRedirectUri(req);
+    await exchangeYahooCodeForToken(code, callbackUri);
+    const yahooEmail = await getYahooLoggedInEmail();
+
+    return res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Yahoo Auth Success</title>
+      </head>
+      <body style="font-family:sans-serif; text-align:center; padding:40px 20px; background:#FAF5FF; margin:0;">
+          <div style="background:white; border-radius:20px; padding:32px 24px; max-width:420px; margin:20px auto; box-shadow:0 8px 30px rgba(96,1,210,0.12); border:1px solid #E9D5FF;">
+              <div style="width:64px; height:64px; background:#F3E8FF; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="#6001D2"><path d="M14.73 12.87l4.98-9.87h-3.41l-3.26 6.94-3.28-6.94H6.3l4.99 9.87V21h3.44v-8.13zm6.27-4.14a1.8 1.8 0 1 1-3.6 0 1.8 1.8 0 0 1 3.6 0z"/></svg>
+              </div>
+              <h2 style="color:#581C87; font-size:22px; margin:0 0 8px 0;">Yahoo Connected!</h2>
+              <p style="color:#475569; font-size:14px; margin:0 0 16px 0;">
+                  Authenticated as:<br><strong style="color:#0F172A; font-size:15px;">${yahooEmail || 'Yahoo User'}</strong>
+              </p>
+              <div style="background:#F8FAFC; border-radius:12px; padding:14px; margin-bottom:24px; font-size:13px; color:#64748B;">
+                  Yahoo OAuth 2.0 is now connected and ready.
+              </div>
+              <a href="/" style="display:block; background:#6001D2; color:white; padding:15px 20px; border-radius:12px; text-decoration:none; font-weight:700; font-size:16px; margin-bottom:12px; box-shadow:0 4px 14px rgba(96,1,210,0.35);">
+                  Open Web Dashboard
+              </a>
+          </div>
+          <script>
+              setTimeout(() => {
+                  window.location.href = "/?yahoo_success=1";
+              }, 1800);
+          </script>
+      </body>
+      </html>
+    `);
+  } catch (err) {
+    return res.status(500).send(`
+      <!DOCTYPE html>
+      <html>
+      <head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Yahoo Authentication Error</title></head>
+      <body style="font-family:sans-serif; text-align:center; padding:40px 20px; background:#FEF2F2;">
+          <div style="background:white; border-radius:16px; padding:30px; max-width:400px; margin:0 auto; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+              <div style="font-size:48px; margin-bottom:16px;">⚠️</div>
+              <h2 style="color:#DC2626; margin-bottom:8px;">Yahoo OAuth Exchange Failed</h2>
+              <p style="color:#64748B; font-size:13px; margin-bottom:24px;">${err.message}</p>
+              <a href="/auth/yahoo" style="display:inline-block; background:#6001D2; color:white; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600;">Retry Authentication</a>
+          </div>
+      </body>
+      </html>
+    `);
+  }
+});
 
 app.get('/auth/login', (req, res) => {
   try {
@@ -329,6 +457,7 @@ app.get('/auth/callback', async (req, res) => {
 
 const handleLogout = (req, res) => {
   logout();
+  logoutYahoo();
   return res.json({ success: true, message: 'Logged out successfully' });
 };
 app.get('/auth/logout', handleLogout);

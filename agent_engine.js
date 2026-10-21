@@ -126,7 +126,7 @@ Do NOT output markdown backticks or commentary outside JSON.
     let parsed = null;
 
     if (this.genAI) {
-      const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-flash-latest'];
+      const modelsToTry = ['gemini-flash-latest', 'gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
       for (const modelName of modelsToTry) {
         try {
           const model = this.genAI.getGenerativeModel({ model: modelName });
@@ -219,7 +219,7 @@ Do NOT output any markdown backticks outside the JSON.
     let parsed = null;
 
     if (this.genAI) {
-      const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-flash-latest'];
+      const modelsToTry = ['gemini-flash-latest', 'gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
       for (const modelName of modelsToTry) {
         try {
           const model = this.genAI.getGenerativeModel({ model: modelName });

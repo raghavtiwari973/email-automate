@@ -253,6 +253,109 @@ async function sendEmailGmail({ toEmail, subject, body, fromName = 'SAPCON Instr
   }
 }
 
+// ──────────────────────────────────────────────
+// Yahoo OAuth 2.0 Helpers
+// ──────────────────────────────────────────────
+const YAHOO_TOKEN_PATH = path.join(ROOT, 'yahoo_token.json');
+const YAHOO_AUTH_URL = 'https://api.login.yahoo.com/oauth2/request_auth';
+const YAHOO_TOKEN_URL = 'https://api.login.yahoo.com/oauth2/get_token';
+const YAHOO_USERINFO_URL = 'https://api.login.yahoo.com/openid/v1/userinfo';
+
+function getYahooClientConfig() {
+  const clientId = process.env.YAHOO_CLIENT_ID;
+  const clientSecret = process.env.YAHOO_CLIENT_SECRET;
+  const redirectUri = process.env.YAHOO_REDIRECT_URI || 'http://localhost:8000/auth/yahoo/callback';
+  return { clientId, clientSecret, redirectUri };
+}
+
+function getYahooAuthorizationUrl(customRedirectUri) {
+  const { clientId, redirectUri } = getYahooClientConfig();
+  if (!clientId) {
+    throw new Error('YAHOO_CLIENT_ID is not configured in .env');
+  }
+  const effectiveUri = customRedirectUri || redirectUri;
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: effectiveUri,
+    response_type: 'code',
+    scope: 'openid profile email',
+  });
+  return `${YAHOO_AUTH_URL}?${params.toString()}`;
+}
+
+async function exchangeYahooCodeForToken(code, customRedirectUri) {
+  const { clientId, clientSecret, redirectUri } = getYahooClientConfig();
+  const effectiveUri = customRedirectUri || redirectUri;
+
+  const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+  const params = new URLSearchParams({
+    grant_type: 'authorization_code',
+    redirect_uri: effectiveUri,
+    code,
+  });
+
+  const response = await fetch(YAHOO_TOKEN_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${basicAuth}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: params.toString(),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error_description || data.error || 'Failed to exchange Yahoo code');
+  }
+
+  // Calculate expiration timestamp
+  if (data.expires_in) {
+    data.expiry_date = Date.now() + data.expires_in * 1000;
+  }
+
+  fs.writeFileSync(YAHOO_TOKEN_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  return data;
+}
+
+function isYahooAuthenticated() {
+  if (!fs.existsSync(YAHOO_TOKEN_PATH)) return false;
+  try {
+    const raw = fs.readFileSync(YAHOO_TOKEN_PATH, 'utf-8');
+    const data = JSON.parse(raw);
+    return Boolean(data.access_token);
+  } catch (_) {
+    return false;
+  }
+}
+
+async function getYahooLoggedInEmail() {
+  if (!isYahooAuthenticated()) return null;
+  try {
+    const raw = fs.readFileSync(YAHOO_TOKEN_PATH, 'utf-8');
+    const tokenData = JSON.parse(raw);
+    const resp = await fetch(YAHOO_USERINFO_URL, {
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`,
+      },
+    });
+    if (resp.ok) {
+      const info = await resp.json();
+      return info.email || info.preferred_username || null;
+    }
+  } catch (err) {
+    console.warn('Failed to fetch Yahoo userinfo:', err.message);
+  }
+  return null;
+}
+
+function logoutYahoo() {
+  if (fs.existsSync(YAHOO_TOKEN_PATH)) {
+    try {
+      fs.unlinkSync(YAHOO_TOKEN_PATH);
+    } catch (_) {}
+  }
+}
+
 module.exports = {
   getCredentials,
   isAuthenticated,
@@ -261,4 +364,10 @@ module.exports = {
   getAuthorizationUrl,
   exchangeCodeForToken,
   sendEmailGmail,
+  // Yahoo exports
+  getYahooAuthorizationUrl,
+  exchangeYahooCodeForToken,
+  isYahooAuthenticated,
+  getYahooLoggedInEmail,
+  logoutYahoo,
 };
