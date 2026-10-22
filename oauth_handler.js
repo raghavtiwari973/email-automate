@@ -70,14 +70,13 @@ function getCredentials() {
       if (dbTokens) tokens = typeof dbTokens === 'string' ? JSON.parse(dbTokens) : dbTokens;
     } catch (_) {}
   }
-  if (!tokens) return null;
+  if (!tokens || (!tokens.access_token && !tokens.refresh_token)) return null;
 
   try {
     const client = getOAuth2Client();
     client.setCredentials(tokens);
     return client;
   } catch (err) {
-    console.warn('Failed to configure Google client credentials:', err.message);
     return null;
   }
 }
@@ -103,7 +102,7 @@ async function getLoggedInEmail() {
     const res = await oauth2.userinfo.get();
     return res.data.email || null;
   } catch (err) {
-    console.warn('Failed to fetch userinfo:', err.message);
+    // Expected when token is expired or unauthorized; return null cleanly
     return null;
   }
 }
