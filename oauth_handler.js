@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
+const nodemailer = require('nodemailer');
 const { getSetting, setSetting, deleteSetting } = require('./db_auth');
 
 const isServerless = Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
@@ -298,7 +299,7 @@ function getYahooAuthorizationUrl(customRedirectUri) {
     client_id: clientId,
     redirect_uri: effectiveUri,
     response_type: 'code',
-    scope: 'openid profile email',
+    scope: 'openid profile email mail-w mail-r',
   });
   return `${YAHOO_AUTH_URL}?${params.toString()}`;
 }
@@ -328,7 +329,6 @@ async function exchangeYahooCodeForToken(code, customRedirectUri) {
     throw new Error(data.error_description || data.error || 'Failed to exchange Yahoo code');
   }
 
-  // Calculate expiration timestamp
   if (data.expires_in) {
     data.expiry_date = Date.now() + data.expires_in * 1000;
   }
@@ -380,6 +380,136 @@ async function getYahooLoggedInEmail() {
   return null;
 }
 
+async function refreshYahooToken(tokenData) {
+  if (!tokenData || !tokenData.refresh_token) return tokenData;
+  const { clientId, clientSecret, redirectUri } = getYahooClientConfig();
+  const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+  const params = new URLSearchParams({
+    grant_type: 'refresh_token',
+    redirect_uri: redirectUri,
+    refresh_token: tokenData.refresh_token,
+  });
+
+  try {
+    const response = await fetch(YAHOO_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${basicAuth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
+
+    const data = await response.json();
+    if (response.ok && data.access_token) {
+      if (data.expires_in) {
+        data.expiry_date = Date.now() + data.expires_in * 1000;
+      }
+      if (!data.refresh_token && tokenData.refresh_token) {
+        data.refresh_token = tokenData.refresh_token;
+      }
+      try {
+        fs.writeFileSync(YAHOO_TOKEN_PATH, JSON.stringify(data, null, 2), 'utf-8');
+      } catch (_) {}
+      try {
+        setSetting('yahoo_token', data);
+      } catch (_) {}
+      return data;
+    }
+  } catch (err) {
+    console.warn('refreshYahooToken failed:', err.message);
+  }
+  return tokenData;
+}
+
+async function sendEmailYahoo({ toEmail, subject, body, fromName = 'SAPCON Instruments' }) {
+  let tokenData = getYahooTokenData();
+  if (!tokenData || !tokenData.access_token) {
+    return {
+      success: false,
+      message: 'YAHOO_AUTH_REQUIRED: Yahoo account is not connected. Please connect Yahoo in Sign In / Sign Up.',
+    };
+  }
+
+  // Check if token expired and refresh if necessary
+  if (tokenData.expiry_date && Date.now() >= tokenData.expiry_date - 60000) {
+    tokenData = await refreshYahooToken(tokenData);
+  }
+
+  const senderEmail = (await getYahooLoggedInEmail()) || 'me';
+
+  // 1. First attempt: Dispatch via Yahoo SMTP with XOAUTH2
+  try {
+    const { clientId, clientSecret } = getYahooClientConfig();
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.mail.yahoo.com',
+      port: 465,
+      secure: true,
+      auth: {
+        type: 'OAuth2',
+        user: senderEmail,
+        clientId: clientId,
+        clientSecret: clientSecret,
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token,
+      },
+    });
+
+    const isHtml = body.includes('<html') || body.includes('<table') || body.includes('<div');
+    const mailOptions = {
+      from: `"${fromName}" <${senderEmail}>`,
+      to: toEmail,
+      subject: subject,
+      [isHtml ? 'html' : 'text']: body,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    return {
+      success: true,
+      message: `Email sent via Yahoo XOAUTH2! (Message ID: ${info.messageId || 'OK'})`,
+    };
+  } catch (smtpErr) {
+    console.warn('Yahoo XOAUTH2 SMTP attempt returned:', smtpErr.message);
+
+    // 2. Second attempt: Yahoo Mail REST API endpoint (https://mail.yahooapis.com/ws/v3/mailboxes/@.id==V1/messages)
+    try {
+      const restResp = await fetch('https://mail.yahooapis.com/ws/v3/mailboxes/@.id==V1/messages', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          message: {
+            to: [{ email: toEmail }],
+            subject: subject,
+            content: {
+              type: body.includes('<html') ? 'text/html' : 'text/plain',
+              data: body,
+            },
+          },
+        }),
+      });
+
+      if (restResp.ok) {
+        const restData = await restResp.json().catch(() => ({}));
+        return {
+          success: true,
+          message: `Email sent via Yahoo Mail API! (ID: ${restData.id || 'OK'})`,
+        };
+      }
+    } catch (restErr) {
+      console.warn('Yahoo REST API send failed:', restErr.message);
+    }
+
+    return {
+      success: false,
+      message: `Yahoo dispatch error: ${smtpErr.message}. If Yahoo rejected OAuth SMTP, please ensure "mail-w" permission is enabled in Yahoo Developer Console.`,
+    };
+  }
+}
+
 function logoutYahoo() {
   if (fs.existsSync(YAHOO_TOKEN_PATH)) {
     try {
@@ -405,4 +535,5 @@ module.exports = {
   isYahooAuthenticated,
   getYahooLoggedInEmail,
   logoutYahoo,
+  sendEmailYahoo,
 };

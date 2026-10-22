@@ -26,6 +26,7 @@ const {
   isYahooAuthenticated,
   getYahooLoggedInEmail,
   logoutYahoo,
+  sendEmailYahoo,
 } = require('./oauth_handler');
 
 const { fetchRecentInboxEmails } = require('./email_reader');
@@ -111,6 +112,21 @@ async function dispatchEmail(toEmail, subject, body, userSender = null) {
   const profile = getCompanyProfile();
   const senderName = profile.sender_name || 'SAPCON Instruments';
 
+  // 1. If Yahoo OAuth is connected, dispatch via Yahoo XOAUTH2 SMTP / Mail API
+  if (isYahooAuthenticated()) {
+    const yahooRes = await sendEmailYahoo({
+      toEmail,
+      subject,
+      body,
+      fromName: senderName,
+    });
+    if (yahooRes.success) {
+      return { ok: true, message: `${yahooRes.message} (Dispatched from connected Yahoo account: ${sender})` };
+    }
+    return { ok: false, message: yahooRes.message || 'Yahoo mail dispatch failed.' };
+  }
+
+  // 2. If Google OAuth is connected, dispatch via Gmail API
   if (isAuthenticated()) {
     const res = await sendEmailGmail({
       toEmail,
@@ -124,10 +140,10 @@ async function dispatchEmail(toEmail, subject, body, userSender = null) {
     return { ok: false, message: res.message || 'Gmail dispatch failed.' };
   }
 
-  // If not authenticated via Google OAuth, return clear actionable guidance so the user knows to connect their account
+  // If neither account is connected, return clear actionable guidance
   return {
     ok: false,
-    message: 'GOOGLE_AUTH_REQUIRED: Please sign in with Google (via Sign In / Sign Up -> Continue with Google) so Gmail API can send your emails directly.',
+    message: 'AUTH_REQUIRED: Please connect your Yahoo or Google account (Sign In -> Continue with Yahoo or Google) to dispatch emails directly.',
   };
 }
 
@@ -1054,7 +1070,7 @@ app.post('/api/approve_send', upload.none(), async (req, res) => {
       remaining_in_queue: Object.keys(draftQueueCache).length,
     });
   } else {
-    const status = message.includes('GOOGLE_AUTH_REQUIRED') ? 401 : 500;
+    const status = message.includes('AUTH_REQUIRED') ? 401 : 500;
     return res.status(status).json({ detail: message });
   }
 });
@@ -1077,10 +1093,10 @@ app.post('/api/update_draft', upload.none(), handleUpdateDraft);
 app.post('/api/update_draft/:queue_id', upload.none(), handleUpdateDraft);
 
 app.post('/api/approve/:queue_id', async (req, res) => {
-  if (!isAuthenticated()) {
+  if (!isAuthenticated() && !isYahooAuthenticated()) {
     return res.status(401).json({
       detail:
-        'GOOGLE_AUTH_REQUIRED: Google account is not connected. Please connect your Google account in the top bar before sending.',
+        'AUTH_REQUIRED: Please sign in with Yahoo or Google (Sign In / Sign Up) before sending.',
     });
   }
 
@@ -1114,10 +1130,14 @@ app.post('/api/approve/:queue_id', async (req, res) => {
       df[leadId]['Generated Email Body'] = String(body);
       saveDataFile(df, DEFAULT_EXCEL);
     }
+    try {
+      await updateLeadContent(leadId, subj, body, 'Sent');
+      await updateLeadStatus(leadId, 'Sent');
+    } catch (_) {}
     delete draftQueueCache[queue_id];
     return res.json({ success: true, message: `Approved & sent to ${toEmail}!` });
   } else {
-    const status = message.includes('GOOGLE_AUTH_REQUIRED') ? 401 : 500;
+    const status = message.includes('AUTH_REQUIRED') ? 401 : 500;
     return res.status(status).json({ detail: message });
   }
 });
