@@ -297,6 +297,10 @@ app.get('/auth/yahoo/callback', async (req, res) => {
     const callbackUri = getYahooRequestRedirectUri(req);
     await exchangeYahooCodeForToken(code, callbackUri);
     const yahooEmail = await getYahooLoggedInEmail();
+    let yahooUserRecord = null;
+    if (yahooEmail) {
+      yahooUserRecord = await upsertGoogleUser(yahooEmail);
+    }
 
     return res.send(`
       <!DOCTYPE html>
@@ -322,9 +326,13 @@ app.get('/auth/yahoo/callback', async (req, res) => {
               </a>
           </div>
           <script>
+              try {
+                  const u = ${JSON.stringify(yahooUserRecord || { email: yahooEmail, name: (yahooEmail ? yahooEmail.split('@')[0] : 'Yahoo User') })};
+                  localStorage.setItem('sapcon_user', JSON.stringify(u));
+              } catch (_) {}
               setTimeout(() => {
                   window.location.href = "/?yahoo_success=1";
-              }, 1800);
+              }, 1200);
           </script>
       </body>
       </html>
@@ -395,8 +403,9 @@ app.get('/auth/callback', async (req, res) => {
     const callbackUri = getRequestRedirectUri(req);
     await exchangeCodeForToken(code, callbackUri);
     const googleEmail = await getLoggedInEmail();
+    let googleUserRecord = null;
     if (googleEmail) {
-      await upsertGoogleUser(googleEmail);
+      googleUserRecord = await upsertGoogleUser(googleEmail);
     }
 
     return res.send(`
@@ -429,6 +438,10 @@ app.get('/auth/callback', async (req, res) => {
               </p>
           </div>
           <script>
+              try {
+                  const gu = ${JSON.stringify(googleUserRecord || { email: googleEmail, name: (googleEmail ? googleEmail.split('@')[0] : 'Google User') })};
+                  localStorage.setItem('sapcon_user', JSON.stringify(gu));
+              } catch (_) {}
               if (navigator.userAgent.match(/Android|iPhone|Mobile/i)) {
                   setTimeout(() => {
                       window.location.href = "sapcon://oauth-callback";
@@ -436,7 +449,7 @@ app.get('/auth/callback', async (req, res) => {
               } else {
                   setTimeout(() => {
                       window.location.href = "/?auth_success=1";
-                  }, 1800);
+                  }, 1200);
               }
           </script>
       </body>
