@@ -5,6 +5,16 @@
 [build.environment]
   SECRETS_SCAN_OMIT_KEYS = "YAHOO_REDIRECT_URI"
 
+[functions]
+  node_bundler = "esbuild"
+  included_files = [
+    "company_profile.json",
+    "leads.xlsx",
+    "leads.csv",
+    "images/**",
+    "node_modules/sql.js/dist/**"
+  ]
+
 # Serverless function rules for API and Auth
 [[redirects]]
   from = "/api/*"

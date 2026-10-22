@@ -11,7 +11,28 @@ let SQL = null;
 
 async function initDb() {
   if (db) return db;
-  SQL = await initSqlJs();
+  try {
+    const wasmCandidates = [
+      path.join(__dirname, 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
+      path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
+      path.join('/var', 'task', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
+      path.join('/var', 'task', 'src', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
+    ];
+    let foundWasm = wasmCandidates.find((p) => fs.existsSync(p));
+
+    if (foundWasm) {
+      SQL = await initSqlJs({ locateFile: () => foundWasm });
+    } else {
+      SQL = await initSqlJs();
+    }
+  } catch (err) {
+    console.error('Failed to initialize sql.js WASM engine:', err.message);
+    // Return null so function doesn't crash entirely
+    return null;
+  }
+
+  if (!SQL) return null;
+
   if (fs.existsSync(DB_PATH)) {
     const fileBuffer = fs.readFileSync(DB_PATH);
     db = new SQL.Database(fileBuffer);
@@ -50,6 +71,9 @@ function hashPassword(password, salt) {
 
 async function registerUser(name, email, password) {
   await initDb();
+  if (!db) {
+    return { success: false, message: 'Database initialization failed', user: null };
+  }
   email = (email || '').trim().toLowerCase();
   name = (name || '').trim();
 
@@ -92,6 +116,9 @@ async function registerUser(name, email, password) {
 
 async function authenticateUser(email, password) {
   await initDb();
+  if (!db) {
+    return { success: false, message: 'Database initialization failed', user: null };
+  }
   email = (email || '').trim().toLowerCase();
   if (!email || !password) {
     return { success: false, message: 'Email and password are required', user: null };
@@ -124,6 +151,7 @@ async function authenticateUser(email, password) {
 
 async function getUserByEmail(email) {
   await initDb();
+  if (!db) return null;
   email = (email || '').trim().toLowerCase();
   const stmt = db.prepare('SELECT id, name, email, created_at FROM users WHERE email = ?');
   stmt.bind([email]);
