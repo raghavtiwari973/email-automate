@@ -55,6 +55,18 @@ async function initDb() {
       value TEXT NOT NULL,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS leads (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      company_name TEXT NOT NULL,
+      contact_person TEXT DEFAULT '',
+      email TEXT NOT NULL,
+      demand TEXT DEFAULT '',
+      subject TEXT DEFAULT '',
+      body TEXT DEFAULT '',
+      status TEXT DEFAULT 'Waiting for Approval',
+      sent_timestamp TEXT DEFAULT '',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
   `);
   saveDb();
   return db;
@@ -235,6 +247,89 @@ async function deleteSetting(key) {
   }
 }
 
+async function getAllLeads() {
+  await initDb();
+  if (!db) return [];
+  try {
+    const stmt = db.prepare('SELECT * FROM leads ORDER BY id ASC');
+    const results = [];
+    while (stmt.step()) {
+      results.push(stmt.getAsObject());
+    }
+    stmt.free();
+    return results;
+  } catch (err) {
+    console.warn('getAllLeads failed:', err.message);
+    return [];
+  }
+}
+
+async function insertLead({ company_name, contact_person = '', email, demand = '', subject = '', body = '', status = 'Waiting for Approval', sent_timestamp = '' }) {
+  await initDb();
+  if (!db) return null;
+  try {
+    db.run(
+      `INSERT INTO leads (company_name, contact_person, email, demand, subject, body, status, sent_timestamp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [company_name || '', contact_person || '', email || '', demand || '', subject || '', body || '', status || 'Waiting for Approval', sent_timestamp || '']
+    );
+    saveDb();
+    const idStmt = db.prepare('SELECT last_insert_rowid() AS id');
+    let newId = null;
+    if (idStmt.step()) {
+      newId = idStmt.getAsObject().id;
+    }
+    idStmt.free();
+    return newId;
+  } catch (err) {
+    console.error('insertLead failed:', err.message);
+    return null;
+  }
+}
+
+async function updateLeadStatus(id, status, sentTimestamp = '') {
+  await initDb();
+  if (!db) return false;
+  try {
+    db.run('UPDATE leads SET status = ?, sent_timestamp = ? WHERE id = ?', [status, sentTimestamp, id]);
+    saveDb();
+    return true;
+  } catch (err) {
+    console.warn(`updateLeadStatus(${id}) failed:`, err.message);
+    return false;
+  }
+}
+
+async function updateLeadContent(id, subject, body, status = null) {
+  await initDb();
+  if (!db) return false;
+  try {
+    if (status) {
+      db.run('UPDATE leads SET subject = ?, body = ?, status = ? WHERE id = ?', [subject, body, status, id]);
+    } else {
+      db.run('UPDATE leads SET subject = ?, body = ? WHERE id = ?', [subject, body, id]);
+    }
+    saveDb();
+    return true;
+  } catch (err) {
+    console.warn(`updateLeadContent(${id}) failed:`, err.message);
+    return false;
+  }
+}
+
+async function deleteLead(id) {
+  await initDb();
+  if (!db) return false;
+  try {
+    db.run('DELETE FROM leads WHERE id = ?', [id]);
+    saveDb();
+    return true;
+  } catch (err) {
+    console.warn(`deleteLead(${id}) failed:`, err.message);
+    return false;
+  }
+}
+
 module.exports = {
   initDb,
   registerUser,
@@ -244,4 +339,10 @@ module.exports = {
   setSetting,
   getSetting,
   deleteSetting,
+  getAllLeads,
+  insertLead,
+  updateLeadStatus,
+  updateLeadContent,
+  deleteLead,
 };
+

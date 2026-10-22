@@ -48,14 +48,31 @@ function identifyColumns(rows) {
   return mapping;
 }
 
+function getEffectivePath(filePath) {
+  if (process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    const filename = path.basename(filePath);
+    return path.join('/tmp', filename);
+  }
+  return filePath;
+}
+
 function loadDataFile(filePathOrBuffer) {
   try {
     let workbook;
     if (Buffer.isBuffer(filePathOrBuffer)) {
       workbook = xlsx.read(filePathOrBuffer, { type: 'buffer' });
     } else if (typeof filePathOrBuffer === 'string') {
-      if (!fs.existsSync(filePathOrBuffer)) return [];
-      workbook = xlsx.readFile(filePathOrBuffer);
+      const effPath = getEffectivePath(filePathOrBuffer);
+      let targetFile = effPath;
+
+      if (!fs.existsSync(targetFile)) {
+        if (fs.existsSync(filePathOrBuffer)) {
+          targetFile = filePathOrBuffer;
+        } else {
+          return [];
+        }
+      }
+      workbook = xlsx.readFile(targetFile);
     } else {
       return [];
     }
@@ -76,7 +93,18 @@ function saveDataFile(rows, filePath) {
     const worksheet = xlsx.utils.json_to_sheet(rows);
     const workbook = xlsx.utils.book_new();
     xlsx.utils.book_append_sheet(workbook, worksheet, 'Leads');
-    xlsx.writeFile(workbook, filePath);
+
+    // First attempt to write to effective path (handles Netlify /tmp)
+    const effPath = getEffectivePath(filePath);
+    try {
+      xlsx.writeFile(workbook, effPath);
+    } catch (writeErr) {
+      if (effPath !== filePath) {
+        xlsx.writeFile(workbook, filePath);
+      } else {
+        throw writeErr;
+      }
+    }
     return true;
   } catch (err) {
     console.error('saveDataFile error:', err.message);

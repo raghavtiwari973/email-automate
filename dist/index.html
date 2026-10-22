@@ -2141,8 +2141,9 @@
                 if (res.ok && data.success) {
                     showToast(`Dispatched to ${draft.email}!`);
                     loadQueueData();
-                } else if (res.status === 401 && !isUserAuthenticated) {
+                } else if (res.status === 401 || (data.detail && data.detail.includes('GOOGLE_AUTH_REQUIRED'))) {
                     notifyAuthRequired();
+                    alert('Please connect your Google account (Sign In -> Continue with Google) so Gmail API can send your emails.');
                 } else {
                     alert('Dispatch notice: ' + (data.detail || data.message || 'Operation finished'));
                     loadQueueData();
@@ -2296,8 +2297,9 @@
                     showToast(`Dispatched to ${activeDraft.email}!`);
                     closeReviewModal();
                     loadQueueData();
-                } else if (res.status === 401 && !isUserAuthenticated) {
+                } else if (res.status === 401 || (data.detail && data.detail.includes('GOOGLE_AUTH_REQUIRED'))) {
                     notifyAuthRequired();
+                    alert('Please connect your Google account (Sign In -> Continue with Google) so Gmail API can send your emails.');
                 } else {
                     alert('Notice: ' + (data.detail || data.message || 'Dispatched'));
                     closeReviewModal();

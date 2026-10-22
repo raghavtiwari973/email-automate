@@ -36,11 +36,17 @@ const {
   authenticateUser,
   getUserByEmail,
   upsertGoogleUser,
+  getAllLeads,
+  insertLead,
+  updateLeadStatus,
+  updateLeadContent,
+  deleteLead,
 } = require('./db_auth');
 
 const ROOT = __dirname;
+const isServerlessEnv = Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
 const PROFILE_PATH = path.join(ROOT, 'company_profile.json');
-const DEFAULT_EXCEL = path.join(ROOT, 'leads.xlsx');
+const DEFAULT_EXCEL = isServerlessEnv ? path.join('/tmp', 'leads.xlsx') : path.join(ROOT, 'leads.xlsx');
 const PORT = process.env.PORT || 8000;
 
 const app = express();
@@ -115,13 +121,13 @@ async function dispatchEmail(toEmail, subject, body, userSender = null) {
     if (res.success) {
       return { ok: true, message: `${res.message} (Dispatched from connected account: ${sender})` };
     }
+    return { ok: false, message: res.message || 'Gmail dispatch failed.' };
   }
 
-  // Graceful simulation dispatch for verified users when OAuth tokens are not active on serverless node
-  const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  // If not authenticated via Google OAuth, return clear actionable guidance so the user knows to connect their account
   return {
-    ok: true,
-    message: `Draft successfully processed & queued for dispatch to ${toEmail} by ${sender} [${nowTime}].`,
+    ok: false,
+    message: 'GOOGLE_AUTH_REQUIRED: Please sign in with Google (via Sign In / Sign Up -> Continue with Google) so Gmail API can send your emails directly.',
   };
 }
 
@@ -485,25 +491,45 @@ app.post('/auth/logout', handleLogout);
 // Leads & Queue API
 // ──────────────────────────────────────────────
 
-app.get('/api/leads', (req, res) => {
-  if (!fs.existsSync(DEFAULT_EXCEL)) {
-    return res.json({ leads: [], queue: Object.values(draftQueueCache) });
+app.get('/api/leads', async (req, res) => {
+  let leadsList = [];
+
+  // 1. Try SQLite database first for persistent serverless storage
+  try {
+    const dbLeads = await getAllLeads();
+    if (dbLeads && dbLeads.length > 0) {
+      leadsList = dbLeads.map((r) => ({
+        id: r.id,
+        company_name: String(r.company_name || ''),
+        contact_person: String(r.contact_person || ''),
+        email: String(r.email || ''),
+        demand: String(r.demand || ''),
+        subject: String(r.subject || ''),
+        body: String(r.body || ''),
+        status: String(r.status || 'Pending'),
+        sent_at: String(r.sent_timestamp || ''),
+      }));
+    }
+  } catch (err) {
+    console.warn('getAllLeads error:', err.message);
   }
 
-  const rawRows = loadDataFile(DEFAULT_EXCEL);
-  const rows = ensureWorkflowColumns(rawRows);
-
-  const leadsList = rows.map((r, idx) => ({
-    id: idx,
-    company_name: String(r['Company Name'] || ''),
-    contact_person: String(r['Contact Person'] || ''),
-    email: String(r['Email'] || ''),
-    demand: String(r['Demand'] || ''),
-    subject: String(r['Generated Subject'] || ''),
-    body: String(r['Generated Email Body'] || ''),
-    status: String(r['Status'] || 'Pending'),
-    sent_at: String(r['Sent Timestamp'] || ''),
-  }));
+  // 2. Fall back to Excel file if SQLite returned nothing
+  if (leadsList.length === 0 && fs.existsSync(DEFAULT_EXCEL)) {
+    const rawRows = loadDataFile(DEFAULT_EXCEL);
+    const rows = ensureWorkflowColumns(rawRows);
+    leadsList = rows.map((r, idx) => ({
+      id: idx,
+      company_name: String(r['Company Name'] || ''),
+      contact_person: String(r['Contact Person'] || ''),
+      email: String(r['Email'] || ''),
+      demand: String(r['Demand'] || ''),
+      subject: String(r['Generated Subject'] || ''),
+      body: String(r['Generated Email Body'] || ''),
+      status: String(r['Status'] || 'Pending'),
+      sent_at: String(r['Sent Timestamp'] || ''),
+    }));
+  }
 
   const profile = getCompanyProfile();
   return res.json({
@@ -513,15 +539,75 @@ app.get('/api/leads', (req, res) => {
   });
 });
 
-app.get('/api/queue', (req, res) => {
-  const pendingCount = Object.keys(draftQueueCache).length;
+app.get('/api/queue', async (req, res) => {
   let sentCount = 0;
   let approvedCount = 0;
   let totalLeads = 0;
   const sentLeads = [];
   const approvedLeads = [];
 
-  if (fs.existsSync(DEFAULT_EXCEL)) {
+  // 1. Try loading from SQLite database
+  try {
+    const dbLeads = await getAllLeads();
+    if (dbLeads && dbLeads.length > 0) {
+      totalLeads = dbLeads.length;
+      dbLeads.forEach((r) => {
+        const st = String(r.status || '').trim().toLowerCase();
+        if (st.startsWith('sent')) {
+          sentCount++;
+          sentLeads.push({
+            queue_id: `sent_${r.id}`,
+            lead_id: r.id,
+            company_name: String(r.company_name || ''),
+            email: String(r.email || ''),
+            subject: String(r.subject || ''),
+            body: String(r.body || ''),
+            status: 'Sent Out',
+            created_at: String(r.sent_timestamp || 'Sent'),
+          });
+        } else if (st.includes('approved')) {
+          approvedCount++;
+          approvedLeads.push({
+            queue_id: `approved_${r.id}`,
+            lead_id: r.id,
+            company_name: String(r.company_name || ''),
+            email: String(r.email || ''),
+            subject: String(r.subject || ''),
+            body: String(r.body || ''),
+            status: 'Approved',
+            created_at: 'Approved',
+          });
+        } else if (
+          r.subject ||
+          r.body ||
+          st.includes('draft') ||
+          st.includes('queue') ||
+          st.includes('wait')
+        ) {
+          const qk = `lead_${r.id}`;
+          if (!draftQueueCache[qk]) {
+            draftQueueCache[qk] = {
+              queue_id: qk,
+              lead_id: r.id,
+              company_name: String(r.company_name || ''),
+              contact_person: String(r.contact_person || ''),
+              email: String(r.email || ''),
+              demand: String(r.demand || ''),
+              subject: String(r.subject || `Instrumentation inquiry for ${r.company_name || 'Client'}`),
+              body: String(r.body || ''),
+              status: r.status || 'Waiting for Approval',
+              created_at: 'Imported',
+            };
+          }
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('Could not read leads from DB:', err.message);
+  }
+
+  // 2. Fall back to Excel file if SQLite has no leads
+  if (totalLeads === 0 && fs.existsSync(DEFAULT_EXCEL)) {
     try {
       const rows = loadDataFile(DEFAULT_EXCEL);
       totalLeads = rows.length;
@@ -581,15 +667,17 @@ app.get('/api/queue', (req, res) => {
     }
   }
 
+  const effectivePendingCount = Object.keys(draftQueueCache).length;
+
   return res.json({
     success: true,
-    count: pendingCount,
+    count: effectivePendingCount,
     queue: Object.values(draftQueueCache),
     sent_leads: sentLeads,
     approved_leads: approvedLeads,
     job_status: batchJobStatus,
     metrics: {
-      pending_review: pendingCount,
+      pending_review: effectivePendingCount,
       approved: approvedCount,
       sent: sentCount,
       total_leads: totalLeads,
@@ -643,17 +731,19 @@ async function runBatchDraftingTask(records, autoSend = false) {
 
       if (autoSend) {
         const { ok, message } = await dispatchEmail(eMail, subj, body);
+        const finalStatus = ok ? 'Sent' : `Send Failed: ${message}`;
         if (leadId !== null && leadId !== undefined && leadId < rows.length) {
           rows[leadId]['Generated Subject'] = subj;
           rows[leadId]['Generated Email Body'] = body;
-          if (ok) {
-            rows[leadId]['Status'] = 'Sent';
-            rows[leadId]['Sent Timestamp'] = nowStr;
-          } else {
-            rows[leadId]['Status'] = `Send Failed: ${message}`;
-          }
+          rows[leadId]['Status'] = finalStatus;
+          if (ok) rows[leadId]['Sent Timestamp'] = nowStr;
           saveDataFile(rows, DEFAULT_EXCEL);
         }
+        // Update database record
+        try {
+          await updateLeadContent(leadId, subj, body, finalStatus);
+          if (ok) await updateLeadStatus(leadId, finalStatus, nowStr);
+        } catch (_) {}
       } else {
         if (leadId !== null && leadId !== undefined && leadId < rows.length) {
           rows[leadId]['Generated Subject'] = subj;
@@ -661,6 +751,10 @@ async function runBatchDraftingTask(records, autoSend = false) {
           rows[leadId]['Status'] = 'Waiting for Approval';
           saveDataFile(rows, DEFAULT_EXCEL);
         }
+        // Update database record
+        try {
+          await updateLeadContent(leadId, subj, body, 'Waiting for Approval');
+        } catch (_) {}
 
         const queueKey = `lead_${leadId}`;
         draftQueueCache[queueKey] = {
@@ -715,6 +809,7 @@ app.post('/api/upload_file', upload.single('file'), (req, res) => {
     if (!cName && !eMail) continue;
 
     const assignedId = startIdx + itemsToProcess.length;
+    const initialStatus = autoSend ? 'Direct Sending…' : 'Queued for Drafting';
     const newRow = {
       'Company Name': cName,
       'Contact Person': pName,
@@ -722,10 +817,23 @@ app.post('/api/upload_file', upload.single('file'), (req, res) => {
       Demand: dVal,
       'Generated Subject': '',
       'Generated Email Body': '',
-      Status: autoSend ? 'Direct Sending…' : 'Queued for Drafting',
+      Status: initialStatus,
       'Sent Timestamp': '',
     };
     currentRows.push(newRow);
+
+    // Save lead to persistent SQLite database
+    insertLead({
+      company_name: cName,
+      contact_person: pName,
+      email: eMail,
+      demand: dVal,
+      status: initialStatus,
+    }).then((dbId) => {
+      if (dbId) {
+        // Also associate db id if available
+      }
+    }).catch(console.warn);
 
     itemsToProcess.push({
       id: assignedId,
@@ -778,6 +886,7 @@ app.post('/api/submit_manual', upload.none(), (req, res) => {
   df = ensureWorkflowColumns(df);
 
   const newId = df.length;
+  const initialStatus = autoSend ? 'Direct Sending…' : 'Queued for Drafting';
   const newRow = {
     'Company Name': companyName,
     'Contact Person': '',
@@ -785,11 +894,20 @@ app.post('/api/submit_manual', upload.none(), (req, res) => {
     Demand: demand,
     'Generated Subject': '',
     'Generated Email Body': '',
-    Status: autoSend ? 'Direct Sending…' : 'Queued for Drafting',
+    Status: initialStatus,
     'Sent Timestamp': '',
   };
   df.push(newRow);
   saveDataFile(df, DEFAULT_EXCEL);
+
+  // Save to SQLite
+  insertLead({
+    company_name: companyName,
+    contact_person: '',
+    email,
+    demand,
+    status: initialStatus,
+  }).catch(console.warn);
 
   const item = [
     {
@@ -854,12 +972,18 @@ app.post('/api/queue/approve_all', async (req, res) => {
         df[leadId]['Status'] = 'Sent';
         df[leadId]['Sent Timestamp'] = nowStr;
       }
+      try {
+        await updateLeadStatus(leadId, 'Sent', nowStr);
+      } catch (_) {}
       delete draftQueueCache[qid];
     } else {
       failedCount++;
       if (leadId !== null && leadId !== undefined && leadId < df.length) {
         df[leadId]['Status'] = `Send Failed: ${message}`;
       }
+      try {
+        await updateLeadStatus(leadId, `Send Failed: ${message}`);
+      } catch (_) {}
     }
   }
 
@@ -874,24 +998,23 @@ app.post('/api/queue/approve_all', async (req, res) => {
 });
 
 app.post('/api/approve_send', upload.none(), async (req, res) => {
-  if (!fs.existsSync(DEFAULT_EXCEL)) {
-    return res.status(404).json({ detail: 'Leads file not found' });
-  }
-
   const queueId = req.body.queue_id;
   const leadId = parseInt(req.body.lead_id, 10);
   const subject = req.body.subject;
   const body = req.body.body;
 
-  let df = loadDataFile(DEFAULT_EXCEL);
-  if (isNaN(leadId) || leadId < 0 || leadId >= df.length) {
-    return res.status(404).json({ detail: 'Lead ID not found' });
+  let df = fs.existsSync(DEFAULT_EXCEL) ? loadDataFile(DEFAULT_EXCEL) : [];
+  df = ensureWorkflowColumns(df);
+
+  let targetEmail = '';
+  if (!isNaN(leadId) && leadId >= 0 && leadId < df.length) {
+    targetEmail = String(df[leadId]['Email'] || '').trim();
+  } else if (queueId && draftQueueCache[queueId]) {
+    targetEmail = draftQueueCache[queueId].email;
   }
 
-  df = ensureWorkflowColumns(df);
-  const targetEmail = String(df[leadId]['Email'] || '').trim();
   if (!targetEmail || !targetEmail.includes('@')) {
-    return res.status(400).json({ detail: 'Invalid email address for this lead' });
+    return res.status(400).json({ detail: 'Invalid recipient email address for this lead' });
   }
 
   const { ok, message } = await dispatchEmail(targetEmail, subject, body);
@@ -905,11 +1028,18 @@ app.post('/api/approve_send', upload.none(), async (req, res) => {
       hour12: true,
     });
 
-    df[leadId]['Status'] = 'Sent';
-    df[leadId]['Sent Timestamp'] = nowStr;
-    df[leadId]['Generated Subject'] = String(subject);
-    df[leadId]['Generated Email Body'] = String(body);
-    saveDataFile(df, DEFAULT_EXCEL);
+    if (!isNaN(leadId) && leadId >= 0 && leadId < df.length) {
+      df[leadId]['Status'] = 'Sent';
+      df[leadId]['Sent Timestamp'] = nowStr;
+      df[leadId]['Generated Subject'] = String(subject);
+      df[leadId]['Generated Email Body'] = String(body);
+      saveDataFile(df, DEFAULT_EXCEL);
+    }
+
+    try {
+      await updateLeadContent(leadId, subject, body, 'Sent');
+      await updateLeadStatus(leadId, 'Sent', nowStr);
+    } catch (_) {}
 
     if (queueId && draftQueueCache[queueId]) {
       delete draftQueueCache[queueId];
