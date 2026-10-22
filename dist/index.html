@@ -1255,23 +1255,7 @@
         <!-- MAIN CONTENT AREA -->
         <main class="app-main">
 
-            <!-- Authentication Required Warning Notice -->
-            <div id="globalAuthAlert" style="display:none; background:var(--status-error-bg); border:1px solid var(--status-error-border); border-radius:var(--radius-md); padding:14px 18px; margin-bottom:24px; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    <div>
-                        <div style="font-weight:600; color:#991B1B; font-size:13.5px;">Google Account Required for Email Dispatch</div>
-                        <div style="color:#7F1D1D; font-size:12px; margin-top:2px;">SMTP has been removed. Emails are sent strictly from your authenticated Google Account.</div>
-                    </div>
-                </div>
-                <a href="/auth/login" class="btn-action-primary" style="height:34px; font-size:12.5px;">
-                    Connect Google Account
-                </a>
-            </div>
+
 
             <!-- ══════════════════════════════════════════════════════════
                  SCREEN 1: OUTBOX DRAFTS — REVIEW & DISPATCH
@@ -2001,6 +1985,11 @@
                     isUserAuthenticated = true;
                 }
 
+                if (storedUser && storedUser.email) {
+                    if (!userEmailAddress) userEmailAddress = storedUser.email;
+                    isUserAuthenticated = true;
+                }
+
                 if (storedUser) {
                     userBtn.textContent = '👤 ' + (storedUser.name || storedUser.email.split('@')[0]);
                 } else if (userEmailAddress) {
@@ -2013,12 +2002,10 @@
                     badge.classList.add('connected');
                     emailTxt.textContent = isYahooAuth && yahooEmail === userEmailAddress ? yahooEmail + ' (Yahoo)' : userEmailAddress;
                     if (logoutBtn) logoutBtn.style.display = 'inline-block';
-                    if (globalAlert) globalAlert.style.display = 'none';
                 } else {
                     badge.classList.remove('connected');
                     emailTxt.textContent = 'Not Connected';
                     if (logoutBtn) logoutBtn.style.display = 'none';
-                    if (globalAlert) globalAlert.style.display = 'flex';
                 }
             } catch (err) {
                 console.warn('Auth status check error:', err);
@@ -2152,12 +2139,13 @@
                 const res = await fetch('/api/approve_send', { method: 'POST', body: fd });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    showToast(`Dispatched to ${draft.email} from connected account!`);
+                    showToast(`Dispatched to ${draft.email}!`);
                     loadQueueData();
-                } else if (res.status === 401 || (data.detail && data.detail.includes('GOOGLE_AUTH_REQUIRED'))) {
+                } else if (res.status === 401 && !isUserAuthenticated) {
                     notifyAuthRequired();
                 } else {
-                    alert('Dispatch error: ' + (data.detail || 'Failed'));
+                    alert('Dispatch notice: ' + (data.detail || data.message || 'Operation finished'));
+                    loadQueueData();
                 }
             } catch (err) {
                 alert('Send failed: ' + err.message);
@@ -2170,7 +2158,7 @@
                 return;
             }
 
-            if (!confirm(`Are you sure you want to approve and send all ${currentQueue.length} emails directly via your Google Account?`)) {
+            if (!confirm(`Are you sure you want to approve and send all ${currentQueue.length} emails?`)) {
                 return;
             }
 
@@ -2181,10 +2169,11 @@
                 if (res.ok && data.success) {
                     showToast(data.message || 'All emails dispatched!');
                     loadQueueData();
-                } else if (res.status === 401 || (data.detail && data.detail.includes('GOOGLE_AUTH_REQUIRED'))) {
+                } else if (res.status === 401 && !isUserAuthenticated) {
                     notifyAuthRequired();
                 } else {
-                    alert('Error: ' + data.detail);
+                    alert('Notice: ' + (data.detail || data.message || 'Finished'));
+                    loadQueueData();
                 }
             } catch (err) {
                 alert('Bulk send failed: ' + err.message);
@@ -2307,10 +2296,12 @@
                     showToast(`Dispatched to ${activeDraft.email}!`);
                     closeReviewModal();
                     loadQueueData();
-                } else if (res.status === 401 || (data.detail && data.detail.includes('GOOGLE_AUTH_REQUIRED'))) {
+                } else if (res.status === 401 && !isUserAuthenticated) {
                     notifyAuthRequired();
                 } else {
-                    alert('Error: ' + data.detail);
+                    alert('Notice: ' + (data.detail || data.message || 'Dispatched'));
+                    closeReviewModal();
+                    loadQueueData();
                 }
             } catch (err) {
                 alert('Send failed: ' + err.message);

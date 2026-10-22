@@ -49,7 +49,12 @@ async function initDb() {
       salt TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       is_active INTEGER DEFAULT 1
-    )
+    );
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
   `);
   saveDb();
   return db;
@@ -181,10 +186,62 @@ async function upsertGoogleUser(email, name = null) {
   return { name: displayName, email };
 }
 
+async function setSetting(key, value) {
+  await initDb();
+  if (!db) return false;
+  try {
+    const valStr = typeof value === 'string' ? value : JSON.stringify(value);
+    db.run(
+      'INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP',
+      [key, valStr]
+    );
+    saveDb();
+    return true;
+  } catch (err) {
+    console.warn(`setSetting(${key}) failed:`, err.message);
+    return false;
+  }
+}
+
+async function getSetting(key) {
+  await initDb();
+  if (!db) return null;
+  try {
+    const stmt = db.prepare('SELECT value FROM app_settings WHERE key = ?');
+    stmt.bind([key]);
+    if (stmt.step()) {
+      const row = stmt.getAsObject();
+      stmt.free();
+      return row.value;
+    }
+    stmt.free();
+    return null;
+  } catch (err) {
+    console.warn(`getSetting(${key}) failed:`, err.message);
+    return null;
+  }
+}
+
+async function deleteSetting(key) {
+  await initDb();
+  if (!db) return false;
+  try {
+    db.run('DELETE FROM app_settings WHERE key = ?', [key]);
+    saveDb();
+    return true;
+  } catch (err) {
+    console.warn(`deleteSetting(${key}) failed:`, err.message);
+    return false;
+  }
+}
+
 module.exports = {
   initDb,
   registerUser,
   authenticateUser,
   getUserByEmail,
-  upsertGoogleUser
+  upsertGoogleUser,
+  setSetting,
+  getSetting,
+  deleteSetting,
 };

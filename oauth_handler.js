@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
+const { getSetting, setSetting, deleteSetting } = require('./db_auth');
 
 const isServerless = Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
 const ROOT = __dirname;
@@ -55,23 +56,38 @@ function getOAuth2Client(customRedirectUri) {
 }
 
 function getCredentials() {
-  if (!fs.existsSync(TOKEN_PATH)) {
-    return null;
+  let tokens = null;
+  if (fs.existsSync(TOKEN_PATH)) {
+    try {
+      const raw = fs.readFileSync(TOKEN_PATH, 'utf-8');
+      tokens = JSON.parse(raw);
+    } catch (_) {}
   }
+  if (!tokens) {
+    try {
+      const dbTokens = getSetting('google_token');
+      if (dbTokens) tokens = typeof dbTokens === 'string' ? JSON.parse(dbTokens) : dbTokens;
+    } catch (_) {}
+  }
+  if (!tokens) return null;
+
   try {
-    const raw = fs.readFileSync(TOKEN_PATH, 'utf-8');
-    const tokens = JSON.parse(raw);
     const client = getOAuth2Client();
     client.setCredentials(tokens);
     return client;
   } catch (err) {
-    console.warn('Failed to load Google tokens:', err.message);
+    console.warn('Failed to configure Google client credentials:', err.message);
     return null;
   }
 }
 
 function saveToken(tokens) {
-  fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens, null, 2), 'utf-8');
+  try {
+    fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens, null, 2), 'utf-8');
+  } catch (_) {}
+  try {
+    setSetting('google_token', tokens);
+  } catch (_) {}
 }
 
 function isAuthenticated() {
@@ -97,6 +113,9 @@ function logout() {
       fs.unlinkSync(TOKEN_PATH);
     } catch (_) {}
   }
+  try {
+    deleteSetting('google_token');
+  } catch (_) {}
   if (_oauth2Client) {
     _oauth2Client.setCredentials({});
   }
@@ -314,26 +333,38 @@ async function exchangeYahooCodeForToken(code, customRedirectUri) {
     data.expiry_date = Date.now() + data.expires_in * 1000;
   }
 
-  fs.writeFileSync(YAHOO_TOKEN_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  try {
+    fs.writeFileSync(YAHOO_TOKEN_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (_) {}
+  try {
+    setSetting('yahoo_token', data);
+  } catch (_) {}
   return data;
 }
 
-function isYahooAuthenticated() {
-  if (!fs.existsSync(YAHOO_TOKEN_PATH)) return false;
-  try {
-    const raw = fs.readFileSync(YAHOO_TOKEN_PATH, 'utf-8');
-    const data = JSON.parse(raw);
-    return Boolean(data.access_token);
-  } catch (_) {
-    return false;
+function getYahooTokenData() {
+  if (fs.existsSync(YAHOO_TOKEN_PATH)) {
+    try {
+      const raw = fs.readFileSync(YAHOO_TOKEN_PATH, 'utf-8');
+      return JSON.parse(raw);
+    } catch (_) {}
   }
+  try {
+    const dbToken = getSetting('yahoo_token');
+    if (dbToken) return typeof dbToken === 'string' ? JSON.parse(dbToken) : dbToken;
+  } catch (_) {}
+  return null;
+}
+
+function isYahooAuthenticated() {
+  const data = getYahooTokenData();
+  return Boolean(data && data.access_token);
 }
 
 async function getYahooLoggedInEmail() {
-  if (!isYahooAuthenticated()) return null;
+  const tokenData = getYahooTokenData();
+  if (!tokenData || !tokenData.access_token) return null;
   try {
-    const raw = fs.readFileSync(YAHOO_TOKEN_PATH, 'utf-8');
-    const tokenData = JSON.parse(raw);
     const resp = await fetch(YAHOO_USERINFO_URL, {
       headers: {
         Authorization: `Bearer ${tokenData.access_token}`,
@@ -355,6 +386,9 @@ function logoutYahoo() {
       fs.unlinkSync(YAHOO_TOKEN_PATH);
     } catch (_) {}
   }
+  try {
+    deleteSetting('yahoo_token');
+  } catch (_) {}
 }
 
 module.exports = {
